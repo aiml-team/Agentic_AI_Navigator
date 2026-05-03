@@ -10,7 +10,7 @@ from fastapi import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from service import init_db
+from services.database import init_db
 from auth import init_navigator_tables
 from routes import router
 
