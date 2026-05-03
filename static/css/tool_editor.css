@@ -1,0 +1,577 @@
+/* ═══════════════════════════════════════════════════════════════
+   tool_editor.css
+   Styles for:
+     1. Three-dots (⋮) menu on every tool card
+     2. Full-detail Tool Editor modal (view + edit all fields)
+═══════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────
+   1. THREE-DOTS MENU
+────────────────────────────────────── */
+.te-dots-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.te-dots-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 1px;
+  transition: color .15s, background .15s;
+}
+.te-dots-btn:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.te-dots-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 34px;
+  min-width: 160px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.14);
+  z-index: 9999;
+  overflow: hidden;
+}
+.te-dots-dropdown.open {
+  display: block;
+}
+
+.te-dots-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  color: #374151;
+  transition: background .12s;
+}
+.te-dots-item:hover {
+  background: #f9fafb;
+}
+.te-dots-item.danger {
+  color: #dc2626;
+  border-top: 1px solid #f3f4f6;
+}
+.te-dots-item.danger:hover {
+  background: #fef2f2;
+}
+
+
+/* ──────────────────────────────────────
+   2. TOOL EDITOR MODAL — OVERLAY
+────────────────────────────────────── */
+.te-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 15, 35, 0.72);
+  z-index: 11000;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.te-overlay.open { display: block; }
+
+
+/* ──────────────────────────────────────
+   3. TOOL EDITOR MODAL — SHELL
+────────────────────────────────────── */
+.te-modal {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  z-index: 11001;
+  width: 94vw;
+  max-width: 820px;
+  max-height: 92vh;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0,50,140,.22);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow: hidden;
+}
+.te-modal.open {
+  display: flex;
+  animation: teScaleIn .22s cubic-bezier(.34,1.1,.64,1) forwards;
+}
+@keyframes teScaleIn {
+  from { opacity:0; transform: translate(-50%,-50%) scale(.93); }
+  to   { opacity:1; transform: translate(-50%,-50%) scale(1);   }
+}
+
+
+/* ──────────────────────────────────────
+   4. HEADER
+────────────────────────────────────── */
+.te-header {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #0b3d7c 0%, #1565c0 55%, #0288d1 100%);
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.te-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.te-header-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+.te-header-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.te-header-cat {
+  font-size: 12px;
+  color: rgba(255,255,255,.7);
+  margin-top: 2px;
+}
+.te-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.te-header-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.3);
+}
+.te-close-btn {
+  background: rgba(255,255,255,.15);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+.te-close-btn:hover { background: rgba(255,255,255,.28); }
+
+
+/* ──────────────────────────────────────
+   5. TABS (View / Edit)
+────────────────────────────────────── */
+.te-tabs {
+  flex-shrink: 0;
+  display: flex;
+  border-bottom: 2px solid #f3f4f6;
+  background: #fafafa;
+  padding: 0 22px;
+}
+.te-tab {
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  margin-bottom: -2px;
+  white-space: nowrap;
+}
+.te-tab.active {
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
+}
+.te-tab:hover:not(.active) { color: #374151; }
+
+
+/* ──────────────────────────────────────
+   6. BODY / SCROLL AREA
+────────────────────────────────────── */
+.te-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Tab panels */
+.te-panel { display: none; }
+.te-panel.active { display: block; }
+
+
+/* ──────────────────────────────────────
+   7. VIEW TAB — info grid
+────────────────────────────────────── */
+.te-view-body {
+  padding: 20px 22px;
+}
+
+.te-section {
+  margin-bottom: 22px;
+}
+.te-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: #6b7280;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Key–value pairs */
+.te-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.te-kv {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.te-kv-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: capitalize;
+  margin-bottom: 3px;
+}
+.te-kv-val {
+  font-size: 13px;
+  color: #111827;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.te-kv-val.empty {
+  color: #d1d5db;
+  font-style: italic;
+}
+.te-kv-val a {
+  color: #2563eb;
+  text-decoration: none;
+}
+.te-kv-val a:hover { text-decoration: underline; }
+
+/* Tag chips for list values */
+.te-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+.te-tag {
+  display: inline-block;
+  padding: 2px 9px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.te-tag.red   { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+.te-tag.green { background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }
+.te-tag.gray  { background:#f3f4f6; color:#374151; border-color:#e5e7eb; }
+
+/* Full-width text block */
+.te-text-block {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #111827;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Raw data table */
+.te-raw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.te-raw-table th {
+  text-align: left;
+  padding: 7px 10px;
+  color: #6b7280;
+  font-weight: 700;
+  border-bottom: 2px solid #f3f4f6;
+  background: #fafafa;
+  white-space: nowrap;
+}
+.te-raw-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f9fafb;
+  color: #374151;
+  vertical-align: top;
+  word-break: break-word;
+  max-width: 420px;
+}
+.te-raw-table tr:hover td { background: #fafafa; }
+.te-raw-table td.key-col {
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  width: 200px;
+}
+
+
+/* ──────────────────────────────────────
+   8. EDIT TAB — form
+────────────────────────────────────── */
+.te-edit-body {
+  padding: 20px 22px;
+}
+
+.te-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 560px) {
+  .te-form-grid { grid-template-columns: 1fr; }
+}
+.te-form-full {
+  margin-bottom: 14px;
+}
+
+.te-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.te-label .te-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9ca3af;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 5px;
+}
+
+.te-input,
+.te-textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  box-sizing: border-box;
+}
+.te-input:focus,
+.te-textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.te-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.te-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.te-checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+.te-checkbox-row label {
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+
+/* File drop zone inside edit tab */
+.te-file-zone {
+  border: 2px dashed #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin-bottom: 14px;
+}
+.te-file-zone:hover,
+.te-file-zone.dragover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+.te-file-zone-icon { font-size: 26px; margin-bottom: 5px; }
+.te-file-zone-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 3px;
+}
+.te-file-zone-sub { font-size: 12px; color: #9ca3af; }
+
+.te-file-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.te-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #374151;
+}
+
+.te-extract-status {
+  display: none;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  margin-bottom: 14px;
+}
+
+.te-edit-note {
+  padding: 9px 13px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  margin-bottom: 16px;
+}
+
+
+/* ──────────────────────────────────────
+   9. FOOTER
+────────────────────────────────────── */
+.te-footer {
+  flex-shrink: 0;
+  padding: 14px 22px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #fafafa;
+}
+
+.te-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background .15s, box-shadow .15s;
+}
+.te-btn-primary {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+}
+.te-btn-primary:hover { background: #1d4ed8; }
+.te-btn-primary:disabled { opacity: .55; cursor: default; }
+.te-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.te-btn-secondary:hover { background: #e5e7eb; }
+.te-btn-danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+.te-btn-danger:hover { background: #fee2e2; }
+
+.te-footer-left { display: flex; gap: 8px; align-items: center; }
+.te-footer-right { display: flex; gap: 8px; align-items: center; }
+
+/* Bulk drop zone used in Register Tool / Register Scenario file upload tabs */
+#rtBulkDropZone.dragover,
+#rsBulkDropZone.dragover {
+  border-color: #2563eb !important;
+  background: #eff6ff !important;
+}
+
+/* Register Tool / Register Scenario / Suggest Scenario modals — te-modal inside modal-overlay */
+#registerToolOverlay.open > .te-modal,
+#registerScenarioOverlay.open > .te-modal,
+#suggestScenarioOverlay.open > .te-modal {
+  display: flex;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: 100%;
+  animation: rtScaleIn .22s cubic-bezier(.34,1.1,.64,1) forwards;
+}
+@keyframes rtScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#registerToolOverlay,
+#registerScenarioOverlay,
+#suggestScenarioOverlay {
+  z-index: 11000;
+}

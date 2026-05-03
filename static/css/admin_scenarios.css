@@ -1,0 +1,412 @@
+/* ═══════════════════════════════════════════════════════════════
+   admin_scenarios.css
+   Styles for:
+     - Suggest Scenario modal overlay
+     - Admin Scenarios page (tabs, review cards, log table)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Suggest button in hamburger drawer ───────────────────── */
+button.menu-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+
+
+/* ── Suggest button variant ───────────────────────────────── */
+.sl-suggest-btn {
+  background: var(--bg-secondary, #f1f5f9) !important;
+  color: var(--text2, #374151) !important;
+  border: 1px solid var(--border, #e5e7eb) !important;
+}
+.sl-suggest-btn:hover {
+  background: var(--border, #e5e7eb) !important;
+}
+
+
+
+/* ══════════════════════════════════════════════════════════════
+   ADMIN SCENARIOS PAGE
+══════════════════════════════════════════════════════════════ */
+
+/* ── Sub-tabs ─────────────────────────────────────────────── */
+.as-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 2px solid var(--border, #e5e7eb);
+  margin-bottom: 20px;
+}
+
+.as-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text3, #6b7280);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.as-tab:hover {
+  color: var(--primary, #2563eb);
+}
+.as-tab.active {
+  color: var(--primary, #2563eb);
+  border-bottom-color: var(--primary, #2563eb);
+}
+
+.as-tab-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 16px;
+}
+.as-tab.active .as-tab-badge {
+  background: var(--primary, #2563eb);
+}
+
+/* ── Panel containers ─────────────────────────────────────── */
+.as-panel {
+  padding: 0 24px 32px;
+}
+
+/* ── Filters row ──────────────────────────────────────────── */
+.as-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.as-search {
+  flex: 1;
+  min-width: 220px;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg, #fff);
+  color: var(--text, #111827);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.as-search:focus {
+  border-color: var(--primary, #2563eb);
+}
+
+.as-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg, #fff);
+  color: var(--text, #111827);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.as-select:focus {
+  border-color: var(--primary, #2563eb);
+}
+
+/* ── Loading / empty ──────────────────────────────────────── */
+.as-loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.as-empty {
+  text-align: center;
+  color: var(--text3, #9ca3af);
+  font-size: 14px;
+  padding: 48px 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REVIEW CARDS
+══════════════════════════════════════════════════════════════ */
+.as-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.as-review-card {
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px 18px;
+  transition: box-shadow 0.15s, opacity 0.2s;
+}
+.as-review-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+.as-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #111827);
+  margin-bottom: 12px;
+}
+
+/* ── Key-value metadata grid ── */
+.as-card-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+}
+
+.as-kv-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.as-kv-key {
+  font-weight: 700;
+  color: var(--text3, #6b7280);
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.as-kv-key::after {
+  content: ':';
+}
+
+.as-kv-val {
+  color: var(--text, #111827);
+  font-weight: 500;
+}
+
+.as-card-scenario-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3, #6b7280);
+  margin-bottom: 6px;
+}
+
+.as-card-body {
+  font-size: 13px;
+  color: var(--text2, #374151);
+  line-height: 1.6;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+}
+
+.as-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border, #f3f4f6);
+  padding-top: 12px;
+}
+
+.as-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.as-note-input {
+  padding: 5px 10px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text, #111827);
+  width: 180px;
+  outline: none;
+}
+.as-note-input:focus {
+  border-color: var(--primary, #2563eb);
+}
+
+.as-btn-approve,
+.as-btn-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, transform 0.1s;
+}
+.as-btn-approve:active,
+.as-btn-reject:active {
+  transform: scale(0.97);
+}
+
+.as-btn-approve {
+  background: #dcfce7;
+  color: #166534;
+}
+.as-btn-approve:hover {
+  background: #bbf7d0;
+}
+
+.as-btn-reject {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.as-btn-reject:hover {
+  background: #fecaca;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LOG TABLE
+══════════════════════════════════════════════════════════════ */
+.as-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.as-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--bg, #fff);
+}
+
+.as-table thead tr {
+  background: var(--bg-secondary, #f9fafb);
+  border-bottom: 2px solid var(--border, #e5e7eb);
+}
+
+.as-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text2, #374151);
+  white-space: nowrap;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.as-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border, #f3f4f6);
+  color: var(--text, #111827);
+  vertical-align: top;
+}
+
+.as-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.as-table tbody tr:hover td {
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.as-td-title {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  cursor: help;
+}
+
+.as-td-date {
+  white-space: nowrap;
+  color: var(--text3, #6b7280);
+  font-size: 12px;
+}
+
+.as-td-note {
+  max-width: 160px;
+  color: var(--text3, #6b7280);
+  font-size: 12px;
+}
+
+/* ── Status badges ────────────────────────────────────────── */
+.as-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.as-badge-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.as-badge-approved {
+  background: #dcfce7;
+  color: #166534;
+}
+.as-badge-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ── Pagination ───────────────────────────────────────────── */
+.as-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.as-page-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 7px;
+  background: var(--bg, #fff);
+  color: var(--text2, #374151);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.as-page-btn:hover:not(:disabled) {
+  background: var(--bg-secondary, #f1f5f9);
+}
+.as-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.as-page-info {
+  font-size: 12px;
+  color: var(--text3, #6b7280);
+}
