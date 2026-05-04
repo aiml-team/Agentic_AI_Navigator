@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
    HOME PAGE — Chat-driven flow
 ══════════════════════════════════════ */
 function initHomePage() {
-  document.getElementById('btnNewPrompt').addEventListener('click', resetToStep1);
+
 
   document.getElementById('btnCopyOutput').addEventListener('click', () => {
     const panel = document.querySelector('.output-panel.active .output-content');
@@ -2155,7 +2155,7 @@ function initChatPanel() {
 
   document.getElementById('chatSkipAllBtn').addEventListener('click', _chatSkipAll);
   document.getElementById('chatGenerateBtn').addEventListener('click', _chatTriggerGenerate);
-  document.getElementById('chatResetBtn').addEventListener('click', _chatReset);
+  document.getElementById('chatResetBtn').addEventListener('click', resetToStep1);
 
   _initDragHandle();
   _initToggleBtn();
@@ -2558,6 +2558,22 @@ function _chatShowSummaryAndGenerate() {
   );
 }
 
+/* ── Lock the entire chat input area — called once Generate is clicked ── */
+function _chatLockInput() {
+  const chatInput       = document.getElementById('chatInput');
+  const chatSendBtn     = document.getElementById('chatSendBtn');
+  const chatGenerateBtn = document.getElementById('chatGenerateBtn');
+  const chatSkipAllBtn  = document.getElementById('chatSkipAllBtn');
+
+  if (chatInput) {
+    chatInput.disabled    = true;
+    chatInput.placeholder = 'Task concluded — start a new chat to change your task.';
+  }
+  if (chatSendBtn)     { chatSendBtn.disabled     = true; }
+  if (chatGenerateBtn) { chatGenerateBtn.disabled  = true; }
+  if (chatSkipAllBtn)  { chatSkipAllBtn.disabled   = true; }
+}
+
 /* ── Generate: fill hidden fields + run ── */
 async function _chatTriggerGenerate() {
   if (!_chatReady && _chatMessages.filter(m => m.role === 'user').length === 0) {
@@ -2580,16 +2596,14 @@ async function _chatTriggerGenerate() {
   if (taskTypeEl) { taskTypeEl.value = taskType; taskTypeEl.dispatchEvent(new Event('input')); }
   if (inputEl)    { inputEl.value = taskDesc; if (charCount) charCount.textContent = taskDesc.length; }
 
-  document.getElementById('chatGenerateBtn').disabled = true;
+  _chatLockInput();
   document.getElementById('chatReadyBanner')?.classList.remove('visible');
-  _chatAddMessage('agent', '⚡ Generating your prompt now…');
+  _chatAddMessage('agent', '⚡ Generating your prompt now… The task has been concluded.');
 
   await _runGenerate(taskDesc, role, taskType);
-
-  document.getElementById('chatGenerateBtn').disabled = false;
 }
 
-/* ── Reset chat ── */
+/* ── Reset chat — re-enables all locked controls ── */
 function _chatReset() {
   _chatMessages     = [];
   _chatReady        = false;
@@ -2603,9 +2617,21 @@ function _chatReset() {
   if (container) container.innerHTML = '';
   document.getElementById('chatSummaryBar')?.classList.remove('visible');
   document.getElementById('chatReadyBanner')?.classList.remove('visible');
-  document.getElementById('chatGenerateBtn').disabled = true;
-  document.getElementById('chatInput').value = '';
-  document.getElementById('chatInput').style.height = 'auto';
+
+  const chatInput       = document.getElementById('chatInput');
+  const chatSendBtn     = document.getElementById('chatSendBtn');
+  const chatGenerateBtn = document.getElementById('chatGenerateBtn');
+  const chatSkipAllBtn  = document.getElementById('chatSkipAllBtn');
+
+  if (chatInput) {
+    chatInput.disabled    = false;
+    chatInput.value       = '';
+    chatInput.style.height = 'auto';
+    chatInput.placeholder = 'Type your task here…';
+  }
+  if (chatSendBtn)     { chatSendBtn.disabled     = false; }
+  if (chatGenerateBtn) { chatGenerateBtn.disabled  = true; }
+  if (chatSkipAllBtn)  { chatSkipAllBtn.disabled   = false; }
 
   _startNewChat();
 }
