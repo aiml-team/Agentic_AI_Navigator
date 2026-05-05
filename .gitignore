@@ -12,7 +12,6 @@ __pycache__/
 
 # Database
 *.db
-chroma_db/
 
 # Environment variables
 .env
