@@ -970,15 +970,21 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 
 /* Reset button in header */
 .chat-reset-btn {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: #fff;
+  background: #fff;
+  border: 1.5px solid #fff;
+  color: var(--primary-dark);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 4px 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   font-family: var(--font);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
 }
-.chat-reset-btn:hover { background: rgba(255,255,255,0.25); }
+.chat-reset-btn:hover {
+  background: var(--primary-pale);
+  color: var(--primary);
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(0,163,224,0.15);
+}

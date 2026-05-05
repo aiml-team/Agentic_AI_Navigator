@@ -48,6 +48,7 @@ let currentTaskType    = 'general';
 let currentIntent      = 'general';
 let currentIndustry    = 'general';
 let currentTool        = '';
+let _runAbortController = null;
 
 function _getSessionEmail() {
   try { return (JSON.parse(sessionStorage.getItem('navigator_session')) || {}).email || ''; }
@@ -464,6 +465,12 @@ async function handleGenerate() {
 }
 
 async function _runGenerate(input, role, taskType) {
+  if (_runAbortController) {
+    _runAbortController.abort();
+  }
+  _runAbortController = new AbortController();
+  const signal = _runAbortController.signal;
+
   goToStep(2);
   startProcessingAnimation();
 
@@ -471,6 +478,7 @@ async function _runGenerate(input, role, taskType) {
     const res = await fetch(API.run, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal:  signal,
       body:    JSON.stringify({
         user_input:       input,
         role:             role,
@@ -503,12 +511,17 @@ async function _runGenerate(input, role, taskType) {
     loadSidebarStats();
 
   } catch (err) {
+    if (err.name === 'AbortError') return;
     goToStep(1);
     showToast(`Error: ${err.message}`, 'error');
   }
 }
 
 function resetToStep1() {
+  if (_runAbortController) {
+    _runAbortController.abort();
+    _runAbortController = null;
+  }
   goToStep(1);
   const banner = document.getElementById('revisedBanner');
   if (banner) { banner.style.display = 'none'; banner.textContent = ''; }
