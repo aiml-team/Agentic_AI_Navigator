@@ -123,12 +123,20 @@ const PL_QUICK_PROMPTS = [
 
 
 /* ══════════════════════════════════════
-   FAVORITES — localStorage persistence
+   FAVORITES — localStorage persistence (per-user scoped)
 ══════════════════════════════════════ */
-let plFavorites = JSON.parse(localStorage.getItem('pl_favorites') || '[]');
+function _plFavKey() {
+  try {
+    const email = (JSON.parse(sessionStorage.getItem('navigator_session')) || {}).email || '';
+    return email ? `sl_favorites__${email}` : 'sl_favorites__guest';
+  } catch { return 'sl_favorites__guest'; }
+}
+
+let plFavorites = [];
+try { plFavorites = JSON.parse(localStorage.getItem(_plFavKey()) || '[]'); } catch { plFavorites = []; }
 
 function plSaveFavorites() {
-  localStorage.setItem('pl_favorites', JSON.stringify(plFavorites));
+  localStorage.setItem(_plFavKey(), JSON.stringify(plFavorites));
 }
 
 
@@ -382,7 +390,7 @@ function plRenderFavorites() {
   // Small helper to render current favorites
   function renderFavoritesGrid() {
     try {
-      plFavorites = JSON.parse(localStorage.getItem('pl_favorites') || '[]');
+      plFavorites = JSON.parse(localStorage.getItem(_plFavKey()) || '[]');
     } catch (e) {
       plFavorites = [];
     }

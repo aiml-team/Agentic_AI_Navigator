@@ -4,9 +4,11 @@
    ─ POST /api/auth/identify  →  { email, role, permissions }
    ─ Session stored in sessionStorage (clears on tab close).
 
-   ADMIN sees everything as-is.
-   USER  hides:
-     • Entire toggle dropdown menu (hdrMenuWrap)
+   BOTH admin and user see:
+     • Profile icon (hdrMenuWrap) with Sign Out only
+
+   ADMIN only sees (hidden for regular users):
+     • Admin section in hamburger drawer (#drawerAdminSection)
      • Register Scenario button  (#slRegisterScenarioBtn)
      • Register Tool button      (#btnRegisterTool)
 ═══════════════════════════════════════════════════════════════ */
@@ -16,18 +18,17 @@
 
   const SESSION_KEY = 'navigator_session';
 
-  /* ── selectors that are ADMIN-ONLY (hidden for users) ──────── */
+  /* ── selectors that are ADMIN-ONLY (hidden for regular users) ── */
   const ADMIN_ONLY = [
-    '#hdrMenuWrap',           // entire toggle dropdown (Analytics, Feedback, Policy, Scenarios…)
+    '#drawerAdminSection',    // admin options block in hamburger drawer
     '#slRegisterScenarioBtn', // Register Scenario button in Scenario Library
     '#btnRegisterTool',       // Register Tool button in AI Tools
   ];
 
   /* ── apply role to the UI ─────────────────────────────────── */
   function applyRole(role) {
-    if (role === 'admin') return; // admin sees everything — no changes needed
+    if (role === 'admin') return;
 
-    /* user: hide every admin-only element */
     ADMIN_ONLY.forEach(sel => {
       document.querySelectorAll(sel).forEach(el => { el.style.display = 'none'; });
     });
@@ -59,6 +60,18 @@
     if (badge) badge.textContent = session.email;
 
     applyRole(session.role);
+
+    /* Profile dropdown toggle — open/close on click */
+    const toggleBtn = document.getElementById('hdrToggleBtn');
+    const dropdown  = document.getElementById('hdrDropdown');
+    if (toggleBtn && dropdown) {
+      const freshBtn = toggleBtn.cloneNode(true);
+      toggleBtn.parentNode.replaceChild(freshBtn, toggleBtn);
+      freshBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+      });
+    }
   }
 
   const ALLOWED_DOMAIN = '@bs.nttdata.com';
@@ -106,48 +119,51 @@
 
   /* ── reset all visible app state so the next user starts fresh ── */
   function resetAppState() {
-    /* 1. Go back to step 1 (clears result, chat, input) */
     if (typeof resetToStep1 === 'function') resetToStep1();
 
-    /* 2. Clear the result area elements directly in case resetToStep1 misses any */
     const clear = (id, prop, val) => { const el = document.getElementById(id); if (el) el[prop] = val; };
-    clear('resultMeta',          'innerHTML', '');
-    clear('toolRecBox',          'innerHTML', '');
-    clear('policyFlagsBox',      'innerHTML', '');
-    clear('alternativesBox',     'innerHTML', '');
-    clear('policyBlockedBox',    'innerHTML', '');
-    clear('resultPrompt',        'textContent', '');
-    clear('policyBlockedBox',    'style.display', 'none');
-    clear('confidentialityNotice','style.display', 'none');
-    clear('promptToolbar',       'style.display', 'none');
-    clear('userInput',           'value', '');
+    clear('resultMeta',           'innerHTML',      '');
+    clear('toolRecBox',           'innerHTML',      '');
+    clear('policyFlagsBox',       'innerHTML',      '');
+    clear('alternativesBox',      'innerHTML',      '');
+    clear('policyBlockedBox',     'innerHTML',      '');
+    clear('resultPrompt',         'textContent',    '');
+    clear('policyBlockedBox',     'style.display',  'none');
+    clear('confidentialityNotice','style.display',  'none');
+    clear('promptToolbar',        'style.display',  'none');
+    clear('userInput',            'value',          '');
 
-    /* 3. Navigate to home page */
     if (typeof navigateTo === 'function') navigateTo('home');
 
-    /* 4. Restore all admin-only elements so the next login can re-apply role */
+    /* Restore admin-only elements so next admin login re-applies correctly */
     ADMIN_ONLY.forEach(sel => {
       document.querySelectorAll(sel).forEach(el => { el.style.display = ''; });
     });
 
-    /* 5. Clear the user badge */
     const badge = document.getElementById('authUserBadge');
     if (badge) badge.textContent = '';
+
+    /* Close profile dropdown if open */
+    document.getElementById('hdrDropdown')?.classList.remove('open');
   }
 
   /* ── logout ───────────────────────────────────────────────── */
   function logout() {
-    resetAppState();
     clearSession();
-    const emailInput = document.getElementById('authEmailInput');
-    if (emailInput) emailInput.value = '';
-    showLoginScreen();
+    window.location.reload();
   }
 
   /* ── boot ─────────────────────────────────────────────────── */
   function boot() {
     document.getElementById('authForm')?.addEventListener('submit', handleLogin);
+
+    /* Sign out — single binding on the static button */
     document.getElementById('authLogoutBtn')?.addEventListener('click', logout);
+
+    /* Close profile dropdown when clicking anywhere else */
+    document.addEventListener('click', () => {
+      document.getElementById('hdrDropdown')?.classList.remove('open');
+    });
 
     const session = loadSession();
     if (session && session.email && session.role) {

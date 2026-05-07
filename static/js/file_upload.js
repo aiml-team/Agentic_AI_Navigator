@@ -4,20 +4,9 @@
 
 (function () {
 
-  /* ── Header Dropdown ── */
-  const toggleBtn = document.getElementById('hdrToggleBtn');
-  const dropdown  = document.getElementById('hdrDropdown');
-
-  if (toggleBtn && dropdown) {
-    toggleBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      dropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', () => dropdown.classList.remove('open'));
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') dropdown.classList.remove('open');
-    });
-  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('hdrDropdown')?.classList.remove('open');
+  });
 
 })();
 
@@ -101,7 +90,8 @@
   if (dropPolicyUpload) {
     dropPolicyUpload.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (dropdown) dropdown.classList.remove('open');
+      document.getElementById('menuDrawer')?.classList.remove('open');
+      document.getElementById('menuDrawerOverlay')?.classList.remove('open');
       openPuModal();
     });
   }

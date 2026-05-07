@@ -209,29 +209,44 @@ function copyPromptText() {
 }
 
 function savePromptToFavorites() {
-  const text = document.getElementById('resultPrompt').textContent;
-  if (!text || text.startsWith('(')) { showToast('No prompt to save yet.', 'error'); return; }
+  if (!currentInput) { showToast('No task to save yet.', 'error'); return; }
 
-  // Build a title from the user input (first 50 chars)
-  const title = (currentInput || 'Saved Prompt').substring(0, 50).trim()
-              + (currentInput && currentInput.length > 50 ? '…' : '');
+  const email = _getSessionEmail();
+  if (!email) { showToast('Please sign in to save favorites.', 'error'); return; }
 
-  // Read existing favorites from localStorage (same key as promptlib.js)
+  const favKey = `sl_favorites__${email}`;
+
+  const title = currentInput.substring(0, 50).trim()
+              + (currentInput.length > 50 ? '…' : '');
+
   let favs = [];
-  try { favs = JSON.parse(localStorage.getItem('pl_favorites') || '[]'); } catch {}
+  try { favs = JSON.parse(localStorage.getItem(favKey) || '[]'); } catch {}
 
-  // Avoid exact duplicates by title
   if (favs.some(f => f.title === title)) {
     showToast('Already saved in Favorites.', 'info'); return;
   }
 
-  favs.push({ title, body: currentInput, fromHome: true });
-  localStorage.setItem('pl_favorites', JSON.stringify(favs));
+  favs.push({ title, scenario: currentInput });
+  localStorage.setItem(favKey, JSON.stringify(favs));
 
-  // Visual feedback
+  if (typeof window.slLoadFavorites === 'function') window.slLoadFavorites();
+  if (typeof window.slRenderFavorites === 'function') window.slRenderFavorites();
+
+  _switchScenarioLibraryToFavorites();
+
   const confirm = document.getElementById('saveConfirm');
   if (confirm) { confirm.style.display = 'inline'; setTimeout(() => { confirm.style.display = 'none'; }, 2500); }
   showToast('Saved to Favorites in Scenario Library!', 'success');
+}
+
+function _switchScenarioLibraryToFavorites() {
+  const favBtn = document.querySelector('.sl-subtab-btn[data-sltab="favorites"]');
+  if (!favBtn) return;
+  document.querySelectorAll('.sl-subtab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sl-subtab-panel').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  favBtn.classList.add('active');
+  const panel = document.getElementById('sl-panel-favorites');
+  if (panel) { panel.classList.add('active'); panel.style.display = ''; }
 }
 
 
@@ -1636,6 +1651,7 @@ async function openAlternativeTool(toolName) {
           if (res.ok) {
             _showBulkStatus(`✅ ${data.tools_loaded} tools loaded from "${_bulkSelectedFile.name}".`, 'success');
             bulkBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload & Apply';
+            _toolsData = null;
             if (typeof loadTools === 'function') loadTools();
             setTimeout(() => _closeModal(), 1800);
           } else {
@@ -2192,12 +2208,14 @@ function _chatAddMessage(role, content) {
 function _chatRenderMessage(role, content) {
   const container = document.getElementById('chatMessages');
   if (!container) return;
-  const avatar = role === 'agent' ? '🤖' : '👤';
+  const avatarHtml = role === 'agent'
+    ? '<img src="/static/ai_compass_true_ui.svg" alt="AI" class="chat-avatar-img"/>'
+    : '👤';
   const div = document.createElement('div');
   div.className = `chat-msg ${role}`;
   const bubbleHtml = role === 'agent' ? _formatAgentMessage(content) : `<span>${escapeHtml(content)}</span>`;
   div.innerHTML = `
-    <div class="chat-avatar">${avatar}</div>
+    <div class="chat-avatar">${avatarHtml}</div>
     <div class="chat-bubble">${bubbleHtml}</div>
   `;
   container.appendChild(div);
@@ -2537,7 +2555,8 @@ async function _chatAskMissingThenGenerate() {
   // Wire controls
   document.getElementById('dropToolChangeLog')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    document.getElementById('hdrDropdown')?.classList.remove('open');
+    document.getElementById('menuDrawer')?.classList.remove('open');
+    document.getElementById('menuDrawerOverlay')?.classList.remove('open');
     _open();
   });
 

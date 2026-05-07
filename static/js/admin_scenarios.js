@@ -186,7 +186,8 @@
   function initDropdownScenarios() {
     document.getElementById('dropScenarios')?.addEventListener('click', e => {
       e.stopPropagation();
-      document.getElementById('hdrDropdown')?.classList.remove('open');
+      document.getElementById('menuDrawer')?.classList.remove('open');
+      document.getElementById('menuDrawerOverlay')?.classList.remove('open');
       navigateTo('admin-scenarios');
       window.adminScenariosNavigate('review');
     });

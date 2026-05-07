@@ -46,8 +46,8 @@
     /* Open from dropdown */
     anDropTrigger?.addEventListener('click', (e) => {
       e.stopPropagation();
-      const dd = document.getElementById('hdrDropdown');
-      if (dd) dd.classList.remove('open');
+      document.getElementById('menuDrawer')?.classList.remove('open');
+      document.getElementById('menuDrawerOverlay')?.classList.remove('open');
       openDashboard();
     });
 

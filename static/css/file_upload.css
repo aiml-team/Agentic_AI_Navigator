@@ -21,19 +21,19 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #dbeafe;
+  background: #e6f2fb;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
 }
 .hdr-toggle-btn:hover .hdr-profile-circle {
-  background: #bfdbfe;
+  background: #99cce9;
 }
 .hdr-profile-svg {
   width: 24px;
   height: 24px;
-  color: #1e3a5f;
+  color: #0072CE;
 }
 
 .hdr-dropdown {
@@ -73,7 +73,8 @@
   transition: background 0.15s;
 }
 .hdr-drop-item:hover:not(:disabled) {
-  background: rgba(255,255,255,0.07);
+  background: #e6f2fb;
+  color: #0072CE;
 }
 .hdr-drop-item.disabled-item {
   opacity: 0.38;

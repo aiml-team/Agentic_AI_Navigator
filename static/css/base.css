@@ -92,12 +92,22 @@ header {
 }
 .hamburger span {
   display: block; height: 3px; width: 22px;
-  background: #4a3ce2; border-radius: 2px; transition: all 0.3s;
+  background: #0072CE; border-radius: 2px; transition: all 0.3s;
 }
 .hdr-logo { height: 36px; width: auto; }
+.hdr-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.hdr-compass-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
 .hdr-title {
   font-size: 1.35rem; font-weight: 800;
-  color: rgb(11, 83, 184);
+  color: #0072CE;
   letter-spacing: -0.5px;
 }
 .status-pill {
@@ -213,6 +223,21 @@ body.sidebar-open .sidebar-overlay { display: block; }
 .menu-link:hover {
   background: rgba(0,163,224,.08); color: var(--primary);
   transform: translateX(4px); text-decoration: none;
+}
+.drawer-admin-divider {
+  height: 1.5px;
+  background: var(--primary);
+  border-radius: 2px;
+  margin: 10px 0 6px;
+  opacity: 0.5;
+}
+.drawer-admin-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--primary);
+  padding: 0 4px 4px;
 }
 
 /* ─── MAIN LAYOUT ─── */

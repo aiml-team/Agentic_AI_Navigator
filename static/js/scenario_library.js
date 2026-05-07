@@ -14,7 +14,16 @@
   let SL_ACTIVE_ROLE  = '';
   let SL_ACTIVE_PHASE = '';
   let SL_SEARCH       = '';
-  let SL_FAVORITES    = JSON.parse(localStorage.getItem('sl_favorites') || '[]');
+  let SL_FAVORITES    = [];
+
+  function _sessionEmail() {
+    try { return (JSON.parse(sessionStorage.getItem('navigator_session')) || {}).email || ''; }
+    catch { return ''; }
+  }
+  function _favKey() {
+    const email = _sessionEmail();
+    return email ? `sl_favorites__${email}` : 'sl_favorites__guest';
+  }
 
   const DELIVER_MEGA  = 'Deliver Projects';
   const DELIVER_PHASES = ['Discover', 'Prepare', 'Explore', 'Realize', 'Deploy', 'Run'];
@@ -52,7 +61,10 @@
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  function _saveFavorites() { localStorage.setItem('sl_favorites', JSON.stringify(SL_FAVORITES)); }
+  function _loadFavorites() {
+    try { SL_FAVORITES = JSON.parse(localStorage.getItem(_favKey()) || '[]'); } catch { SL_FAVORITES = []; }
+  }
+  function _saveFavorites() { localStorage.setItem(_favKey(), JSON.stringify(SL_FAVORITES)); }
   function _isFav(title)    { return SL_FAVORITES.some(f => f.title === title); }
 
   function _copyText(text, btn) {
@@ -369,7 +381,7 @@
     const grid  = document.getElementById('slFavGrid');
     const empty = document.getElementById('slFavEmpty');
     if (!grid) return;
-    try { SL_FAVORITES = JSON.parse(localStorage.getItem('sl_favorites') || '[]'); } catch(e) { SL_FAVORITES = []; }
+    _loadFavorites();
 
     if (!SL_FAVORITES.length) {
       grid.innerHTML = '';
@@ -772,6 +784,7 @@
      INIT
   ══════════════════════════════════════ */
   document.addEventListener('DOMContentLoaded', () => {
+    _loadFavorites();
     initSubTabs();
     initSearch();
     initRoleFilter();
@@ -785,6 +798,8 @@
     if (page && page.classList.contains('active')) loadScenarios();
   });
 
-  window.slLoadScenarios = loadScenarios;
+  window.slLoadScenarios   = loadScenarios;
+  window.slRenderFavorites = renderFavorites;
+  window.slLoadFavorites   = _loadFavorites;
 
 })();

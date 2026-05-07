@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Navigator</title>
+  <link rel="icon" type="image/svg+xml" href="/static/ai_compass_true_ui.svg"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -77,6 +78,16 @@
   <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/Useer_manual_AI-Navigator.pdf?csf=1&web=1&e=tcxscn" class="menu-link">📖 User manual</a>
   <a href="#" class="menu-link fb-open-form-trigger">💬 Feedback Form</a>
   <button class="menu-link ss-open-trigger" id="drawerSuggestScenario" type="button">📝 Submit Scenario</button>
+
+  <div class="drawer-admin-section" id="drawerAdminSection">
+    <div class="drawer-admin-divider"></div>
+    <div class="drawer-admin-label">Admin</div>
+    <button class="menu-link" id="dropAnalytics">📊 Analytics Dashboard</button>
+    <button class="menu-link" id="dropFeedbackView">💬 View Feedback</button>
+    <button class="menu-link" id="dropToolChangeLog">📝 Tools Change Log</button>
+    <button class="menu-link" id="dropPolicyUpload">📋 Upload Policy</button>
+    <button class="menu-link" id="dropScenarios">📝 Scenarios</button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -96,45 +107,29 @@
       <img src="/static/Logo-White.png" alt="Logo" class="hdr-logo" onerror="this.style.display='none'"/>
     </div>
     <div class="hdr-center">
-      <div class="hdr-title">AI Navigator</div>
+      <div class="hdr-title-wrap">
+        <img src="/static/ai_compass_true_ui.svg" alt="AI Compass" class="hdr-compass-icon"/>
+        <div class="hdr-title">AI Navigator</div>
+      </div>
     </div>
 
     <div class="hdr-right-col">
         <span id="authUserBadge"></span>
-        <button id="authLogoutBtn" title="Sign out">Sign out</button>
         <div class="hdr-menu-wrap" id="hdrMenuWrap">
-            <button class="hdr-toggle-btn" id="hdrToggleBtn" aria-label="Menu">
-            <div class="hdr-profile-circle">
+            <button class="hdr-toggle-btn" id="hdrToggleBtn" aria-label="Profile menu">
+              <div class="hdr-profile-circle">
                 <svg class="hdr-profile-svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
-            </div>
+              </div>
             </button>
             <div class="hdr-dropdown" id="hdrDropdown">
-            <button class="hdr-drop-item disabled-item" disabled>
-                <span>ℹ️</span> About
-            </button>
-            <button class="hdr-drop-item" id="dropAnalytics">
-                <span>📊</span> Analytics Dashboard
-            </button>
-            <button class="hdr-drop-item" id="dropFeedbackView">
-                <span>💬</span> View Feedback
-            </button>
-            <button class="hdr-drop-item" id="dropToolChangeLog">
-                <span>📝</span> Tools Change Log
-            </button>
-            <button class="hdr-drop-item" id="dropPolicyUpload">
-                <span>📋</span> Upload Policy
-            </button>
-            <button class="hdr-drop-item" id="dropScenarios">
-                <span>📝</span> Scenarios
-            </button>
-            <button class="hdr-drop-item disabled-item" disabled>
-                <span>✉️</span> Contact
-            </button>
+              <button class="hdr-drop-item" id="authLogoutBtn">
+                <span>🚪</span> Sign out
+              </button>
             </div>
         </div>
-</div>
+    </div>
   </div>
 </header>
 
