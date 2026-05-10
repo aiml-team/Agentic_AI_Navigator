@@ -21,14 +21,14 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #e6f2fb;
+  background: #d7dbde;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
 }
 .hdr-toggle-btn:hover .hdr-profile-circle {
-  background: #99cce9;
+  background: #dde3ea;
 }
 .hdr-profile-svg {
   width: 24px;
