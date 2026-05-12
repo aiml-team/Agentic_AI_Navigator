@@ -407,7 +407,7 @@
     if (document.getElementById('chartjsScript')) return;
     const s = document.createElement('script');
     s.id  = 'chartjsScript';
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.src = '/static/js/chart.umd.min.js';
     s.onload = () => {
       chartJsLoaded = true;
       chartJsCallbacks.forEach(fn => fn());

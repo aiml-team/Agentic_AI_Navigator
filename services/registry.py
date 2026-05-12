@@ -198,14 +198,11 @@ def _merge_db_tools_into_registry():
         for row in rows:
             r = dict(row)
             tool_name = r["tool_name"]
-            db_icon = r.get("icon", "") or ""
-            excel_icon = (AI_TOOLS_REGISTRY.get(tool_name) or {}).get("icon", "") or ""
-            resolved_icon = db_icon if (db_icon and db_icon != "🤖") else (excel_icon or db_icon)
             AI_TOOLS_REGISTRY[tool_name] = {
                 "description":         r.get("description", ""),
                 "category":            r.get("category", ""),
                 "url":                 r.get("url", ""),
-                "icon":                resolved_icon,
+                "icon":                r.get("icon", "🤖"),
                 "best_for":            json.loads(r.get("best_for", "[]") or "[]"),
                 "strong_signals":      json.loads(r.get("strong_signals", "[]") or "[]"),
                 "weak_signals":        json.loads(r.get("weak_signals", "[]") or "[]"),
@@ -223,19 +220,12 @@ def _merge_db_tools_into_registry():
 
 
 def reload_tools_registry(excel_bytes: bytes = None,
-                           excel_path:  str   = None):
+                           excel_path:  str   = "AI_TOOLS.xlsx"):
     global AI_TOOLS_REGISTRY
 
     if excel_bytes:
         new = _load_from_bytes(excel_bytes)
     else:
-        if excel_path is None:
-            for _candidate in _STARTUP_EXCEL_CANDIDATES:
-                if os.path.exists(_candidate):
-                    excel_path = _candidate
-                    break
-            if excel_path is None:
-                excel_path = "AI_TOOLS_Roles.xlsx"
         new = load_tools_registry_from_excel(excel_path=excel_path)
 
     if not new:
@@ -330,24 +320,11 @@ def _get_enriched_summary(tool_name: str) -> str:
     return info.get("description", "")
 
 
-_STARTUP_EXCEL_CANDIDATES = ["AI_TOOLS_Roles.xlsx", "AI_TOOLS.xlsx"]
-
-def _load_startup_registry():
-    for _path in _STARTUP_EXCEL_CANDIDATES:
-        if os.path.exists(_path):
-            try:
-                return load_tools_registry_from_excel(excel_path=_path)
-            except Exception:
-                continue
-    return None
-
-_startup_data = _load_startup_registry()
-if _startup_data:
-    AI_TOOLS_REGISTRY.update(_startup_data)
-else:
+try:
+    AI_TOOLS_REGISTRY.update(load_tools_registry_from_excel())
+except Exception as e:
     warnings.warn(
-        "[AI_TOOLS_REGISTRY] No Excel file found at startup "
-        f"(tried: {_STARTUP_EXCEL_CANDIDATES}). "
+        f"[AI_TOOLS_REGISTRY] Failed to load Excel on startup: {e}. "
         "Upload a registry via the UI header dropdown before using the tool recommender.",
         RuntimeWarning,
         stacklevel=1,

@@ -3201,7 +3201,6 @@ async function _chatTriggerGenerate() {
 
   if (!taskDesc) { showToast('Please describe your task first.', 'error'); return; }
 
-  // Populate the form fields so history + audit log capture correct values
   const roleEl     = document.getElementById('selRole');
   const taskTypeEl = document.getElementById('selTaskType');
   const inputEl    = document.getElementById('userInput');
@@ -3359,4 +3358,3 @@ function _initToggleBtn() {
     }
   });
 }
-
