@@ -97,13 +97,20 @@ const TOOL_LOGO_MAP = [
 const NAVIGATOR_LOGO_URL = '/static/ai_compass_true_ui.svg';
 
 /**
- * Locally-hosted brand logos. Highest-priority source — wins over favicon,
- * clearbit, and simpleicons. Use this when those public services don't have
- * a particular brand or return a wrong/generic icon.
+ * PRIMARY icon source: the Excel registry (AI_TOOLS_Roles.xlsx).
+ * Each tool row has an `icon` column which can hold:
+ *   - A /static/... path  →  rendered as <img>  (e.g. /static/chatgpt.png)
+ *   - An emoji             →  rendered inline    (e.g. 🎫)
+ *   - A full URL           →  rendered as <img>
+ *   - Empty / missing      →  falls through to the chain below
  *
- * To add a tool: drop the image into static/ and add an entry here.
- * Keys are lowercase substrings of the tool name.
+ * To change a tool's icon, update the `icon` column in the Excel and
+ * re-upload via Admin → Upload Registry. No code changes needed.
+ *
+ * The maps below are FALLBACK ONLY — used when the Excel icon is empty
+ * (e.g. newly added tools or tools not yet in the registry).
  */
+
 const LOCAL_TOOL_LOGO_MAP = {
   'microsoft copilot':     '/static/microsoft%20copilot.jpeg',
   'm365 copilot':          '/static/microsoft%20copilot.jpeg',
@@ -111,33 +118,15 @@ const LOCAL_TOOL_LOGO_MAP = {
   'chatgpt':               '/static/chatgpt.png',
 };
 
-/**
- * Direct favicon map for tools whose URL is known.
- * IMPORTANT: order matters — most specific keys first because substring
- * matching is used. "microsoft copilot studio" must match BEFORE the
- * generic "microsoft copilot", otherwise both would resolve to the
- * Microsoft 365 Copilot domain.
- */
 const TOOL_FAVICON_MAP = {
-  /* External tools from data/external_tools.json — these have proper
-     site favicons / clearbit logos.
-     NOTE: "chatgpt" intentionally NOT here — clearbit's raster logo for
-     chat.openai.com renders blurry at icon sizes. Resolved instead via the
-     simpleicons 'openai' slug below, which is a crisp SVG. */
   'cassidy':                  'cassidy.ai',
   'clay':                     'clay.com',
   'hubspot':                  'hubspot.com',
   'jasper':                   'jasper.ai',
   'synthesia':                'synthesia.io',
   'icertis':                  'icertis.com',
-  /* Microsoft Copilot Studio — clearbit/favicon work for this subdomain */
   'microsoft copilot studio': 'copilotstudio.microsoft.com',
   'copilot studio':           'copilotstudio.microsoft.com',
-
-  /* NOTE: "Microsoft Copilot" intentionally NOT here — copilot.microsoft.com
-     serves a generic Bing globe favicon instead of the real Copilot brand
-     mark. It's now resolved via the explicit simpleicons map below, which
-     uses the proper microsoftcopilot ribbon SVG. */
 };
 
 /** Logo source URLs — clearbit returns actual brand logos (higher quality),
@@ -162,17 +151,17 @@ function _autoSlug(name) {
 
 /**
  * Resolve a tool's icon HTML.
- *  1. Admin's custom icon (anything except the legacy 🤖) wins
- *  2. Explicit brand map (handles names that don't match their slug,
- *     e.g. ChatGPT → openai, Gemini → googlegemini)
- *  3. Auto-derived slug from the tool's own name → tries simpleicons.org
- *     Image onerror → quietly swaps to the Navigator compass, so any tool
- *     whose name doesn't have a brand on simpleicons still gets a graceful
- *     fallback without a broken image.
+ *  1. Excel-sourced icon (path, URL, or emoji) — set in AI_TOOLS_Roles.xlsx `icon` column.
+ *     This is the primary source. Change icons by editing the Excel, no code changes needed.
+ *  2. LOCAL_TOOL_LOGO_MAP — fallback for tools whose Excel icon is empty (local /static/ files)
+ *  3. TOOL_FAVICON_MAP — clearbit logo → Google favicon chain for known domains
+ *  4. TOOL_LOGO_MAP — simpleicons.org brand SVG by name substring
+ *  5. Auto-derived simpleicons slug from tool name
+ *  6. Navigator compass (/static/ai_compass_true_ui.svg) — final fallback
  *
- * @param {string} toolName  e.g. "ChatGPT", "GitHub Copilot", "Slack"
- * @param {string} customIcon admin-set icon (emoji or URL); may be undefined/null/'🤖'
- * @param {number} sizePx   desired pixel size of rendered icon
+ * @param {string} toolName   e.g. "ChatGPT (OpenAI)", "Cassidy"
+ * @param {string} customIcon icon value from registry (Excel `icon` column or DB override)
+ * @param {number} sizePx     desired pixel size of rendered icon
  * @returns {string} HTML string ready to inject
  */
 function _toolIconHtml(toolName, customIcon, sizePx) {
@@ -180,7 +169,7 @@ function _toolIconHtml(toolName, customIcon, sizePx) {
   const px = `${sz}px`;
   const baseStyle = `width:${px};height:${px};object-fit:contain;display:inline-block;vertical-align:middle;`;
 
-  // 1. Respect admin's custom icon (URL → <img>, emoji/text → inline span)
+  // 1. Excel-sourced icon (or DB override): URL/path → <img>, emoji/text → inline span
   if (customIcon && customIcon !== '🤖' && customIcon.trim()) {
     if (/^(https?:|\/)/.test(customIcon)) {
       return `<img src="${customIcon}" alt="" style="${baseStyle}" />`;
@@ -190,9 +179,7 @@ function _toolIconHtml(toolName, customIcon, sizePx) {
 
   const lc = (toolName || '').toLowerCase();
 
-  // 2. Local hosted brand logo — highest priority for tools where public
-  //    services (clearbit, favicon, simpleicons) don't have a good asset.
-  //    Edit LOCAL_TOOL_LOGO_MAP above to add more.
+  // 2. Fallback: local hosted brand logo (used when Excel icon is empty)
   for (const [needle, path] of Object.entries(LOCAL_TOOL_LOGO_MAP)) {
     if (lc.includes(needle)) {
       return `<img src="${path}" alt="${escapeHtml(toolName || '')}"
