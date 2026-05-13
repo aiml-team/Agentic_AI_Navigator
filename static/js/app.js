@@ -115,7 +115,7 @@ const LOCAL_TOOL_LOGO_MAP = {
   'microsoft copilot':     '/static/microsoft%20copilot.jpeg',
   'm365 copilot':          '/static/microsoft%20copilot.jpeg',
   'microsoft 365 copilot': '/static/microsoft%20copilot.jpeg',
-  'chatgpt':               '/static/chatgpt.png',
+  'chatgpt':               '/static/Images/chatgpt.png',
 };
 
 const TOOL_FAVICON_MAP = {
