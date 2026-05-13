@@ -598,28 +598,12 @@ function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
       }
     }
 
-    const defaultTask = _inferTaskType(roleSel.value) || null;
-    if (defaultTask) {
-      taskSel.value = defaultTask;
-    } else if (activeTaskType) {
-      if (![...taskSel.options].some(opt => (opt.value || '').toLowerCase() === activeTaskType.toLowerCase())) {
-        const customTaskOption = document.createElement('option');
-        customTaskOption.value = activeTaskType;
-        customTaskOption.text = activeTaskType;
-        taskSel.append(customTaskOption);
-      }
-      taskSel.value = activeTaskType;
-    } else if (currentAppTaskType) {
-      if (![...taskSel.options].some(opt => (opt.value || '').toLowerCase() === currentAppTaskType.toLowerCase())) {
-        const customTaskOption = document.createElement('option');
-        customTaskOption.value = currentAppTaskType;
-        customTaskOption.text = currentAppTaskType;
-        taskSel.append(customTaskOption);
-      }
-      taskSel.value = currentAppTaskType;
-    } else if (taskHomeSel) {
-      taskSel.value = taskHomeSel.value || 'Research & Analysis';
-    }
+    const defaultTask = _inferTaskType(roleSel.value)
+      || activeTaskType
+      || currentAppTaskType
+      || (taskHomeSel ? taskHomeSel.value : '')
+      || 'Research & Analysis';
+    taskSel.textContent = defaultTask;
 
     desc.value = body || '';
 
@@ -646,7 +630,7 @@ function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
       close();
 
       const role     = (roleSel.value || '').trim();
-      const taskType = (taskSel.value || '').trim();
+      const taskType = (taskSel.textContent || '').trim();
       const taskDesc = desc.value.trim();
 
       if (!taskDesc) return;
