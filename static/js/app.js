@@ -1,8 +1,10 @@
 /* ══════════════════════════════════════════════════════
    app.js — API config, state, home page / generate,
-            render result, refine, feedback, history,
-            tools, analytics, policies, sidebar stats
+             render result, refine, feedback, history,
+             tools, analytics, policies, sidebar stats
 ══════════════════════════════════════════════════════ */
+
+window._explIdCounter = 0;
 
 
 /* ══════════════════════════════════════
@@ -112,9 +114,9 @@ const NAVIGATOR_LOGO_URL = '/static/Images/Navigator.svg';
  */
 
 const LOCAL_TOOL_LOGO_MAP = {
-  'microsoft copilot':     '/static/microsoft%20copilot.jpeg',
-  'm365 copilot':          '/static/microsoft%20copilot.jpeg',
-  'microsoft 365 copilot': '/static/microsoft%20copilot.jpeg',
+  'microsoft copilot':     '/static/Images/microsoft%20copilot.jpeg',
+  'm365 copilot':          '/static/Images/microsoft%20copilot.jpeg',
+  'microsoft 365 copilot': '/static/Images/microsoft%20copilot.jpeg',
   'chatgpt':               '/static/Images/chatgpt.png',
 };
 
@@ -951,57 +953,56 @@ function renderResult(data) {
   // ── Tool recommendation box ──
   const toolBox = document.getElementById('toolRecBox');
   if (data.recommended_tool && !data.policy_blocked) {
-    toolBox.innerHTML = `
-      <div class="tool-rec-box">
-        <div class="tool-rec-header">
-          <div class="tool-rec-icon">${_toolIconHtml(data.recommended_tool, data.tool_icon, 36)}</div>
-          <div>
-            <div class="tool-rec-name">${escapeHtml(data.recommended_tool)}</div>
-            <div class="tool-rec-category">${escapeHtml(data.tool_category || '')}</div>
-          </div>
-          <div class="tool-rec-badges" id="toolRecBadges"></div>
-        </div>
-        <div class="tool-rec-reason">${escapeHtml(data.tool_reason || '')}</div>
+    const _confPct    = typeof data.tool_confidence_pct === 'number' && data.tool_confidence_pct > 0 ? data.tool_confidence_pct : null;
+    const _confExpl   = data.tool_confidence_explanation || '';
+    const _confLabel  = !_confPct ? '' : _confPct >= 85 ? 'Excellent fit' : _confPct >= 75 ? 'Strong fit' : _confPct >= 55 ? 'Good fit' : _confPct >= 35 ? 'Partial fit' : 'Weak fit';
+    const _confColor  = !_confPct ? 'var(--primary)' : _confPct >= 85 ? '#10B981' : _confPct >= 75 ? '#00A3E0' : _confPct >= 55 ? '#3B82F6' : _confPct >= 35 ? '#F59E0B' : '#EF4444';
+    const _confBg     = !_confPct ? 'var(--primary-pale)' : _confPct >= 85 ? '#ECFDF5' : _confPct >= 75 ? '#E8F7FD' : _confPct >= 55 ? '#EFF6FF' : _confPct >= 35 ? '#FFFBEB' : '#FEF2F2';
+    const _confBorder = !_confPct ? 'var(--primary)' : _confPct >= 85 ? '#6EE7B7' : _confPct >= 75 ? '#BAE6FD' : _confPct >= 55 ? '#BFDBFE' : _confPct >= 35 ? '#FCD34D' : '#FCA5A5';
 
-        ${(typeof data.tool_confidence_pct === 'number' && data.tool_confidence_pct > 0) ? (() => {
-          const confPct    = data.tool_confidence_pct;
-          const confExpl   = data.tool_confidence_explanation || '';
-          const confLabel  = confPct >= 85 ? 'Excellent fit' : confPct >= 75 ? 'Strong fit' : confPct >= 55 ? 'Good fit' : confPct >= 35 ? 'Partial fit' : 'Weak fit';
-          const confColor  = confPct >= 85 ? '#10B981' : confPct >= 75 ? '#00A3E0' : confPct >= 55 ? '#3B82F6' : confPct >= 35 ? '#F59E0B' : '#EF4444';
-          const confBg     = confPct >= 85 ? '#ECFDF5' : confPct >= 75 ? '#E8F7FD' : confPct >= 55 ? '#EFF6FF' : confPct >= 35 ? '#FFFBEB' : '#FEF2F2';
-          const confBorder = confPct >= 85 ? '#6EE7B7' : confPct >= 75 ? '#BAE6FD' : confPct >= 55 ? '#BFDBFE' : confPct >= 35 ? '#FCD34D' : '#FCA5A5';
-          return `
-        <div style="margin-top:14px;padding:14px 16px;border-radius:10px;background:${confBg};border:1px solid ${confBorder};">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:${confColor};">Match Confidence</span>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:13px;font-weight:800;color:${confColor};">${confPct}%</span>
-              <span style="font-size:11px;font-weight:600;color:${confColor};padding:2px 8px;border-radius:999px;background:${confBorder};opacity:0.85">${confLabel}</span>
+    toolBox.innerHTML = `
+      <div class="tool-rec-box" style="padding:14px 16px;">
+
+        <!-- Row 1: Icon + Name | Confidence block | Open button -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:${_confExpl ? '10px' : '4px'};">
+          <!-- Icon + name -->
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:0;">
+            <div class="tool-rec-icon" style="font-size:20px;">${_toolIconHtml(data.recommended_tool, data.tool_icon, 26)}</div>
+            <div style="min-width:0;">
+              <div class="tool-rec-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;">${escapeHtml(data.recommended_tool)}</div>
+              ${data.tool_category ? `<div class="tool-rec-category">${escapeHtml(data.tool_category)}</div>` : ''}
             </div>
           </div>
-          <div style="height:8px;background:rgba(0,0,0,0.07);border-radius:999px;overflow:hidden;${confExpl ? 'margin-bottom:10px' : ''}">
-            <div style="height:100%;width:${confPct}%;background:${confColor};border-radius:999px;transition:width 0.6s ease;"></div>
+
+          <div style="flex:1;"></div>
+
+          <!-- Confidence badge -->
+          ${_confPct ? `<span style="flex-shrink:0;white-space:nowrap;font-size:12px;font-weight:700;color:${_confColor};background:${_confBg};border:1px solid ${_confBorder};border-radius:7px;padding:4px 10px;">Match Confidence: ${_confPct}%</span>` : ''}
+
+          <!-- Open button -->
+          <button class="alt-card-btn" id="toolRecOpenBtn" onclick="openAlternativeTool('${escapeHtml(data.recommended_tool)}')" style="flex-shrink:0;white-space:nowrap;">↗ Open</button>
+
+
+        </div>
+
+        <!-- Row 2: Explanation (2-line clamp) + More... -->
+        ${_confExpl ? (() => {
+          const _id = 'trExpl_' + (++window._explIdCounter);
+          return `
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.55;border-top:1px solid ${_confBorder};padding-top:8px;">
+          <div id="${_id}_short">
+            <div style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(_confExpl)}</div>
+            <button onclick="document.getElementById('${_id}_short').style.display='none';document.getElementById('${_id}_full').style.display='block';" style="background:none;border:none;padding:0;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">More...</button>
           </div>
-          ${confExpl ? `<div style="font-size:12px;color:${confColor};line-height:1.6;opacity:0.9;">${escapeHtml(confExpl)}</div>` : ''}
+          <div id="${_id}_full" style="display:none;">
+            ${escapeHtml(_confExpl)}
+            <button onclick="document.getElementById('${_id}_full').style.display='none';document.getElementById('${_id}_short').style.display='block';" style="background:none;border:none;padding:0;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Less</button>
+          </div>
         </div>`;
         })() : ''}
-
-        <div class="tool-rec-footer" style="margin-top:12px;">
-          ${data.tool_url ? `<a class="tool-url-btn" href="${escapeHtml(data.tool_url)}" target="_blank" rel="noopener">🚀 Open Tool</a>` : ''}
-        </div>
       </div>`;
 
-    // Async: inject prompt-required badge once registry is available
-    fetch(API.tools).then(r => r.json()).then(registry => {
-      const key  = Object.keys(registry).find(k => k.toLowerCase() === (data.recommended_tool || '').toLowerCase());
-      const info = key ? registry[key] : null;
-      const badgesEl = document.getElementById('toolRecBadges');
-      if (badgesEl && info) {
-        const rawPrompt = (info.raw_data?.is_prompt_required ?? info.is_prompt_required ?? '');
-        const promptBadge = buildPromptBadge(rawPrompt);
-        if (promptBadge) badgesEl.insertAdjacentHTML('afterbegin', promptBadge);
-      }
-    }).catch(() => {});
+
   } else {
     toolBox.innerHTML = '';
   }
@@ -1053,20 +1054,21 @@ function renderResult(data) {
         </summary>
         <div class="alt-cards-row" id="altCardsRow" style="margin-top:10px;">
           ${alts.map(a => `
-            <div class="alt-card" id="alt-card-${CSS.escape(a)}">
-              <div class="alt-card-header">
-                <div class="alt-card-icon">${_toolIconHtml(a, null, 26)}</div>
-                <div class="alt-card-body">
-                  <div class="alt-card-name">${escapeHtml(a)}</div>
-                  <div class="alt-card-cat">Loading…</div>
+            <div class="alt-card" id="alt-card-${CSS.escape(a)}" style="padding:12px 14px;">
+              <!-- Row 1: icon + name | confidence | open -->
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:0;">
+                  <div class="alt-card-icon" id="alt-icon-${CSS.escape(a)}" style="width:28px;height:28px;font-size:16px;">${_toolIconHtml(a, null, 20)}</div>
+                  <div style="min-width:0;">
+                    <div class="alt-card-name" style="font-size:12px;">${escapeHtml(a)}</div>
+                    <div class="alt-card-cat" id="alt-cat-${CSS.escape(a)}" style="display:none;"></div>
+                  </div>
                 </div>
-                <div class="alt-card-right">
-                  <button class="alt-card-btn" onclick="openAlternativeTool('${escapeHtml(a)}')" title="Open ${escapeHtml(a)}">
-                    ↗ Open
-                  </button>
-                </div>
+                <div style="flex:1;display:flex;justify-content:flex-end;" id="alt-conf-${CSS.escape(a)}"></div>
+                <button class="alt-card-btn" id="alt-btn-${CSS.escape(a)}" onclick="openAlternativeTool('${escapeHtml(a)}')" title="Open ${escapeHtml(a)}" style="flex-shrink:0;">↗ Open</button>
               </div>
-              <div class="alt-card-content" id="alt-card-content-${CSS.escape(a)}"></div>
+              <!-- Row 2: explanation -->
+              <div id="alt-card-content-${CSS.escape(a)}"></div>
             </div>`).join('')}
         </div>
       </details>`;
@@ -1085,44 +1087,47 @@ function renderResult(data) {
         const contentEl = document.getElementById(`alt-card-content-${CSS.escape(a)}`);
 
         // Icon + category
-        if (info) {
-          card.querySelector('.alt-card-icon').innerHTML  = _toolIconHtml(a, info.icon, 26);
-          card.querySelector('.alt-card-cat').textContent = info.category || '';
-        } else {
-          card.querySelector('.alt-card-icon').innerHTML  = _toolIconHtml(a, null, 26);
-          card.querySelector('.alt-card-cat').textContent = 'AI Tool';
-        }
+        const iconEl = document.getElementById(`alt-icon-${CSS.escape(a)}`);
+        const catEl  = document.getElementById(`alt-cat-${CSS.escape(a)}`);
+        const btnEl  = document.getElementById(`alt-btn-${CSS.escape(a)}`);
+        const confEl = document.getElementById(`alt-conf-${CSS.escape(a)}`);
+
+        if (iconEl) iconEl.innerHTML  = _toolIconHtml(a, info ? info.icon : null, 20);
 
         // Open button URL
-        if (toolUrl) {
-          card.querySelector('.alt-card-btn').onclick = () =>
-            window.open(toolUrl, '_blank', 'noopener');
+        if (btnEl && toolUrl) {
+          btnEl.onclick = () => window.open(toolUrl, '_blank', 'noopener');
+        } else if (btnEl && !toolUrl) {
+          btnEl.style.display = 'none';
         }
 
-        // Content area: description + confidence bar + reason
-        if (contentEl) {
+        // Confidence block (inline, same row)
+        if (confEl && pctVal !== null) {
           const confLabel  = pctVal >= 85 ? 'Excellent fit' : pctVal >= 75 ? 'Strong fit' : pctVal >= 55 ? 'Good fit' : pctVal >= 35 ? 'Partial fit' : 'Weak fit';
           const confColor  = pctVal >= 85 ? '#10B981' : pctVal >= 75 ? '#00A3E0' : pctVal >= 55 ? '#3B82F6' : pctVal >= 35 ? '#F59E0B' : '#EF4444';
           const confBg     = pctVal >= 85 ? '#ECFDF5' : pctVal >= 75 ? '#E8F7FD' : pctVal >= 55 ? '#EFF6FF' : pctVal >= 35 ? '#FFFBEB' : '#FEF2F2';
           const confBorder = pctVal >= 85 ? '#6EE7B7' : pctVal >= 75 ? '#BAE6FD' : pctVal >= 55 ? '#BFDBFE' : pctVal >= 35 ? '#FCD34D' : '#FCA5A5';
+          confEl.innerHTML = `<span style="white-space:nowrap;font-size:12px;font-weight:700;color:${confColor};background:${confBg};border:1px solid ${confBorder};border-radius:7px;padding:4px 10px;">Match Confidence: ${pctVal}%</span>`;
+        }
 
+        // Explanation (2-line clamp + More...)
+        if (contentEl && reason) {
+          const confBorder = pctVal >= 85 ? '#6EE7B7' : pctVal >= 75 ? '#BAE6FD' : pctVal >= 55 ? '#BFDBFE' : pctVal >= 35 ? '#FCD34D' : pctVal !== null ? '#FCA5A5' : 'var(--border)';
+          const _id = 'altExpl_' + (++window._explIdCounter);
+          contentEl.style.marginTop = '8px';
+          contentEl.style.borderTop = `1px solid ${confBorder}`;
+          contentEl.style.paddingTop = '7px';
           contentEl.innerHTML = `
-            ${info && info.description ? `<div class="alt-card-desc" style="margin:0 0 10px 0;font-size:13px;line-height:1.5;color:#374151;">${escapeHtml(info.description)}</div>` : ''}
-            ${pctVal !== null || reason ? `
-            <div style="padding:12px 14px;border-radius:10px;background:${confBg};border:1px solid ${confBorder};width:100%;box-sizing:border-box;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:${confColor};">Match Confidence</span>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <span style="font-size:13px;font-weight:800;color:${confColor};">${pctVal}%</span>
-                  <span style="font-size:11px;font-weight:600;color:${confColor};padding:2px 7px;border-radius:999px;background:${confBorder};opacity:0.85">${confLabel}</span>
-                </div>
+            <div style="font-size:12.5px;color:var(--text2);line-height:1.55;">
+              <div id="${_id}_short">
+                <div style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(reason)}</div>
+                <button onclick="document.getElementById('${_id}_short').style.display='none';document.getElementById('${_id}_full').style.display='block';" style="background:none;border:none;padding:0;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">More...</button>
               </div>
-              <div style="height:7px;background:rgba(0,0,0,0.07);border-radius:999px;overflow:hidden;${reason ? 'margin-bottom:8px;' : ''}">
-                <div style="height:100%;width:${pctVal}%;background:${confColor};border-radius:999px;transition:width 0.6s ease;"></div>
+              <div id="${_id}_full" style="display:none;">
+                ${escapeHtml(reason)}
+                <button onclick="document.getElementById('${_id}_full').style.display='none';document.getElementById('${_id}_short').style.display='block';" style="background:none;border:none;padding:0;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Less</button>
               </div>
-              ${reason ? `<div style="font-size:12px;color:${confColor};line-height:1.6;opacity:0.9;">${escapeHtml(reason)}</div>` : ''}
-            </div>` : ''}
-          `;
+            </div>`;
         }
       });
     }).catch(() => {});
@@ -1814,11 +1819,18 @@ async function openAlternativeTool(toolName) {
   try {
     const res  = await fetch(API.tools);
     const data = await res.json();
-    // Case-insensitive lookup
-    const key  = Object.keys(data).find(k => k.toLowerCase() === toolName.toLowerCase());
-    if (key && data[key] && data[key].url) {
-      window.open(data[key].url, '_blank', 'noopener');
-    } else {
+     const _tn  = toolName.toLowerCase();
+     // 1. Exact case-insensitive match
+     let key = Object.keys(data).find(k => k.toLowerCase() === _tn);
+     // 2. Registry key starts with the tool name (e.g. "ChatGPT (OpenAI)" vs "ChatGPT")
+     if (!key) key = Object.keys(data).find(k => k.toLowerCase().startsWith(_tn));
+     // 3. Tool name starts with the registry key
+     if (!key) key = Object.keys(data).find(k => _tn.startsWith(k.toLowerCase()));
+     // 4. Either contains the other
+     if (!key) key = Object.keys(data).find(k => k.toLowerCase().includes(_tn) || _tn.includes(k.toLowerCase()));
+     if (key && data[key] && data[key].url) {
+       window.open(data[key].url, '_blank', 'noopener');
+     } else {
       // Fallback: navigate to AI Tools page so user can find it
       showToast(`Opening AI Tools page — search for "${toolName}"`, 'success');
       if (typeof navigateTo === 'function') navigateTo('tools');
@@ -3209,7 +3221,7 @@ async function _chatTriggerGenerate() {
 
   _chatLockInput();
   document.getElementById('chatReadyBanner')?.classList.remove('visible');
-  _chatAddMessage('agent', '⚡ Generating your prompt now… The task has been concluded.');
+  _chatAddMessage('agent', '⚡ Generating your prompt now…');
 
   await _runGenerate(taskDesc, role, taskType);
 }
