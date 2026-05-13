@@ -55,16 +55,12 @@
   function _loadFavorites() {
     try { SL_FAVORITES = JSON.parse(localStorage.getItem(_favKey()) || '[]'); } catch { SL_FAVORITES = []; }
   }
-  function _saveFavorites() { localStorage.setItem(_favKey(), JSON.stringify(SL_FAVORITES)); _updateFavoritesTabVisibility(); }
+  function _saveFavorites() { localStorage.setItem(_favKey(), JSON.stringify(SL_FAVORITES)); }
   function _isFav(title)    { return SL_FAVORITES.some(f => f.title === title); }
-  // Show the Favorites tab only when the user has at least one. Empty tabs
-  // that point to nothing are clutter.
   function _updateFavoritesTabVisibility() {
     const tab = document.getElementById('slFavoritesTab');
     if (!tab) return;
-    tab.style.display = SL_FAVORITES.length ? '' : 'none';
-    // If user is currently on Favorites and just removed the last one, jump
-    // back to Scenarios so they don't get stuck on a hidden panel.
+    tab.style.display = '';
     if (!SL_FAVORITES.length && tab.classList.contains('active')) {
       const scenariosBtn = document.querySelector('.sl-subtab-btn[data-sltab="scenarios"]');
       if (scenariosBtn) scenariosBtn.click();
@@ -413,13 +409,16 @@
         const card     = btn.closest('.sl-card');
         const title    = decodeURIComponent(card.dataset.title);
         const scenario = decodeURIComponent(card.dataset.scenario);
+        const persona  = card.dataset.persona || '';
+        const mega     = card.dataset.mega || '';
+        const cat      = card.dataset.cat || '';
         const idx      = SL_FAVORITES.findIndex(f => f.title === title);
         if (idx >= 0) {
           SL_FAVORITES.splice(idx, 1);
           btn.innerHTML = '&#9734; Save';
           btn.classList.remove('sl-fav-saved');
         } else {
-          SL_FAVORITES.push({ title, scenario });
+          SL_FAVORITES.push({ title, scenario, persona, mega_group: mega, category: cat });
           btn.innerHTML = '&#9733; Saved';
           btn.classList.add('sl-fav-saved');
         }
@@ -444,7 +443,13 @@
     }
     if (empty) empty.classList.add('hidden');
     grid.innerHTML = `<div class="sl-cards-row">${
-      SL_FAVORITES.map(f => _buildCard({ title: f.title, scenario: f.scenario, mega_group: '', category: '', persona: '' })).join('')
+      SL_FAVORITES.map(f => _buildCard({
+        title: f.title,
+        scenario: f.scenario,
+        mega_group: f.mega_group || '',
+        category: f.category || '',
+        persona: f.persona || ''
+      })).join('')
     }</div>`;
     _bindCardActions(grid);
   }

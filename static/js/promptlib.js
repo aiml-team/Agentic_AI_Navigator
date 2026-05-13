@@ -533,7 +533,7 @@ async function _plFetchAllRoles() {
   return _plRolesCache;
 }
 
-function plOpenScenarioGenModal({ body, activeRole }) {
+function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
   const modal = document.getElementById('scenarioGenModal');
   const closeBtn = document.getElementById('btnCloseScenarioGenModal');
   const cancelBtn = document.getElementById('btnCancelScenarioGen');
@@ -577,12 +577,20 @@ function plOpenScenarioGenModal({ body, activeRole }) {
 
   function _populateAndOpen(allRoles) {
     const activeFilterRole = (typeof window.slGetActiveRole === 'function') ? window.slGetActiveRole() : '';
+    const currentAppRole = (typeof window.currentRole === 'string' ? window.currentRole : '') || '';
+    const currentAppTaskType = (typeof window.currentTaskType === 'string' ? window.currentTaskType : '') || '';
 
     roleSel.innerHTML = '<option value="">— Select a role —</option>' +
       allRoles.map(r => `<option value="${plEscapeHtml(r)}">${plEscapeHtml(r)}</option>`).join('');
 
-    const preferredRole = activeRole || activeFilterRole || '';
+    const preferredRole = activeRole || currentAppRole || activeFilterRole || '';
     if (preferredRole) {
+      if (![...roleSel.options].some(opt => (opt.value || '').toLowerCase() === preferredRole.toLowerCase())) {
+        const customRoleOption = document.createElement('option');
+        customRoleOption.value = preferredRole;
+        customRoleOption.text = preferredRole;
+        roleSel.append(customRoleOption);
+      }
       roleSel.value = preferredRole;
       if (!roleSel.value) {
         const match = allRoles.find(r => r.toLowerCase() === preferredRole.toLowerCase());
@@ -593,6 +601,22 @@ function plOpenScenarioGenModal({ body, activeRole }) {
     const defaultTask = _inferTaskType(roleSel.value) || null;
     if (defaultTask) {
       taskSel.value = defaultTask;
+    } else if (activeTaskType) {
+      if (![...taskSel.options].some(opt => (opt.value || '').toLowerCase() === activeTaskType.toLowerCase())) {
+        const customTaskOption = document.createElement('option');
+        customTaskOption.value = activeTaskType;
+        customTaskOption.text = activeTaskType;
+        taskSel.append(customTaskOption);
+      }
+      taskSel.value = activeTaskType;
+    } else if (currentAppTaskType) {
+      if (![...taskSel.options].some(opt => (opt.value || '').toLowerCase() === currentAppTaskType.toLowerCase())) {
+        const customTaskOption = document.createElement('option');
+        customTaskOption.value = currentAppTaskType;
+        customTaskOption.text = currentAppTaskType;
+        taskSel.append(customTaskOption);
+      }
+      taskSel.value = currentAppTaskType;
     } else if (taskHomeSel) {
       taskSel.value = taskHomeSel.value || 'Research & Analysis';
     }

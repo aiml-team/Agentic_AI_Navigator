@@ -1525,7 +1525,7 @@ async function loadHistory() {
             </svg>
             View
           </button>
-          <button class="btn btn-primary btn-sm" onclick="openHistoryRegenerateModal('${encodeURIComponent(row.raw_input || '')}')">
+          <button class="btn btn-primary btn-sm" onclick="openHistoryRegenerateModal('${encodeURIComponent(row.raw_input || '')}', '${encodeURIComponent(row.role || '')}', '${encodeURIComponent(row.task_type || '')}')">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="1 4 1 10 7 10"/>
               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
@@ -2590,8 +2590,10 @@ async function loadSidebarStats() {
 }
 
 
-function openHistoryRegenerateModal(encodedInput) {
+function openHistoryRegenerateModal(encodedInput, encodedRole, encodedTaskType) {
   const body = decodeURIComponent(encodedInput || '');
+  const previousRole = decodeURIComponent(encodedRole || '') || '';
+  const previousTaskType = decodeURIComponent(encodedTaskType || '') || '';
 
   // move to Home first
   if (typeof navigateTo === 'function') navigateTo('home');
@@ -2604,7 +2606,7 @@ function openHistoryRegenerateModal(encodedInput) {
 
   // open same popup used by Scenario Library Generate button
   if (typeof plOpenScenarioGenModal === 'function') {
-    plOpenScenarioGenModal({ body });
+    plOpenScenarioGenModal({ body, activeRole: previousRole, activeTaskType: previousTaskType });
   } else {
     // fallback: just populate textarea if modal function is not available
     const textarea  = document.getElementById('userInput');
