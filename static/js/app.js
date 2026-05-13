@@ -2666,13 +2666,6 @@ function initChatPanel() {
   // "New task" wipes the chat + result. Confirm if there's anything to lose
   // (real messages from either side or extracted task context).
   document.getElementById('chatResetBtn').addEventListener('click', () => {
-    const hasContent =
-      (_chatMessages || []).some(m => m.role === 'user') ||
-      (_chatMessages || []).length > 1 ||
-      (_chatExtracted && (_chatExtracted.role || _chatExtracted.task_type || _chatExtracted.task_description));
-    if (hasContent && !window.confirm('Start a new task? Your current chat and result will be cleared.')) {
-      return;
-    }
     resetToStep1();
   });
 
