@@ -1420,6 +1420,9 @@ async function initRecentRuns() {
   const moreBtn = document.getElementById('homeRecentMore');
   if (!list || !block) return;
 
+  list.innerHTML = '';
+  block.style.display = 'none';
+
   // "See all" jumps to the History tab via existing nav handler.
   if (moreBtn && !moreBtn._wired) {
     moreBtn._wired = true;

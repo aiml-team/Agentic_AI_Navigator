@@ -3,6 +3,16 @@
    Storage: Azure Blob Storage (metadata.json + attachments per folder)
 ══════════════════════════════════════════════════════════════════ */
 
+function getLoggedInEmail() {
+  try {
+    return (JSON.parse(sessionStorage.getItem('navigator_session')) || {}).email || '';
+  } catch {
+    return '';
+  }
+}
+
+
+
 (function () {
   'use strict';
 
@@ -49,7 +59,7 @@
     formBody.innerHTML = `
       <div class="fb-field">
         <label>Email Address</label>
-        <input type="email" id="fbEmail" placeholder="you@company.com" autocomplete="email"/>
+        <input type="email" id="fbEmail" value="${escFb(getLoggedInEmail())}" readonly/>
       </div>
 
       <div class="fb-field">
@@ -225,7 +235,7 @@
 
   async function submitFeedback() {
     const btn     = formBody.querySelector('#fbSubmitBtn');
-    const email   = formBody.querySelector('#fbEmail')?.value.trim() || '';
+    const email = getLoggedInEmail();
     const comment = formBody.querySelector('#fbComment')?.value.trim() || '';
 
     if (!selectedRating) return;

@@ -111,6 +111,9 @@
   }
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById('homeRecentList')?.replaceChildren();
+    const recentBlock = document.getElementById('homeRecentBlock');
+    if (recentBlock) recentBlock.style.display = 'none';
   }
 
   /* ── show login / show app ────────────────────────────────── */
@@ -206,6 +209,10 @@
       if (!res.ok) throw new Error(data.detail || 'Login failed');
       saveSession(data);
       showApp(data);
+
+      if (typeof initRecentRuns === 'function') initRecentRuns();
+      if (typeof loadHistory === 'function') loadHistory();
+
     } catch (err) {
       errorEl.textContent   = `❌ ${err.message}`;
       errorEl.style.display = 'block';
