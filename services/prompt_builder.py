@@ -459,6 +459,41 @@ def _build_fallback_prompt(
     )
 
 
+def _build_fallback_corlo_prompt(
+    user_input: str, role: str, task_type: str, industry: str, intent: str,
+    tool_name: str, tool_info: dict, policy_block: str, sensitivity: str
+) -> str:
+    effective_role = role.strip() if role and role != "general" else "Enterprise Professional"
+    
+    policy_section = ""
+    if policy_block:
+        policy_section = f"- Respect all company policies: {policy_block}"
+    
+    sensitivity_section = ""
+    if sensitivity == "client":
+        sensitivity_section = "- Replace real names with [CLIENT NAME] and figures with [VALUE]\n- Flag sections needing review before external sharing"
+    elif sensitivity == "internal":
+        sensitivity_section = "- Mark outputs as internal use only\n- Avoid disclosing sensitive internal metrics"
+    
+    limitations = []
+    if policy_section:
+        limitations.append(policy_section)
+    if sensitivity_section:
+        limitations.extend(sensitivity_section.split('\n'))
+    limitations_str = '\n'.join(limitations) if limitations else "- Apply standard professional practices"
+
+    return f"""ROLE: You are a {effective_role} working in the {industry} industry.
+
+CONTEXT: You are using {tool_name} ({tool_info.get('category', 'AI Tool')}) to complete a {task_type} task.
+
+OBJECTIVE: {user_input}
+
+LIMITATIONS:
+{limitations_str}
+
+OUTPUT: Provide a well-structured, professional response tailored for a {effective_role} audience. Format clearly with headers and sections where appropriate."""
+
+
 def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
     conn = get_db()
     row  = conn.execute(
@@ -486,9 +521,10 @@ def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
         try:
             system_msg = (
                 "You are an expert prompt engineer. Your job is to write a clear, effective, "
-                "task-specific AI prompt that a user can paste directly into an AI tool. "
+                "task-specific AI prompt structured in CORLO format. The CORLO format has 5 sections: "
+                "ROLE, CONTEXT, OBJECTIVE, LIMITATIONS, OUTPUT. "
                 "The prompt must be immediately usable — no meta-commentary, no placeholders, "
-                "no explanations about the prompt itself. Just the prompt."
+                "no explanations about the prompt itself. Just the CORLO-structured prompt."
             )
 
             policy_instruction = (
@@ -510,7 +546,7 @@ def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
             }.get(sensitivity, "")
 
             user_msg = (
-                f"Write a ready-to-use AI prompt for the following task.\n\n"
+                f"Write a CORLO-formatted AI prompt for the following task.\n\n"
                 f"USER REQUEST: {user_input}\n\n"
                 f"CONTEXT:\n"
                 f"- User role    : {role}\n"
@@ -521,14 +557,16 @@ def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
                 f"- Sensitivity  : {sensitivity}"
                 f"{sensitivity_instruction}"
                 f"{policy_instruction}\n\n"
-                f"Requirements for the prompt you write:\n"
-                f"1. Directly address the user's specific request — not a generic template.\n"
-                f"2. Give the AI tool clear context about who is asking and why.\n"
-                f"3. Specify what the output should look like (format, depth, tone).\n"
-                f"4. Include any constraints (sensitivity rules, policy requirements, etc.).\n"
-                f"5. Be concise but complete — remove any filler or boilerplate.\n"
-                f"6. Do NOT wrap the prompt in quotes or add any preamble like 'Here is your prompt:'.\n"
-                f"7. Write the prompt as if you are the user talking directly to the AI tool."
+                f"Requirements for the CORLO prompt you write:\n"
+                f"1. Structure the prompt in exactly 5 sections: ROLE, CONTEXT, OBJECTIVE, LIMITATIONS, OUTPUT\n"
+                f"2. ROLE: Define the AI's role based on the user role and industry context\n"
+                f"3. CONTEXT: Provide background information and tool context\n"
+                f"4. OBJECTIVE: Clearly state what the AI should accomplish\n"
+                f"5. LIMITATIONS: Include any constraints, sensitivity rules, and policy requirements\n"
+                f"6. OUTPUT: Specify the desired output format and structure\n"
+                f"7. Be concise but complete — remove any filler or boilerplate\n"
+                f"8. Do NOT wrap the prompt in quotes or add any preamble like 'Here is your prompt:'\n"
+                f"9. Write the prompt as if you are the user talking directly to the AI tool"
             )
 
             corlo_prompt, _ = _azure_chat(
@@ -540,12 +578,12 @@ def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
                 temperature=0.3,
             )
         except Exception:
-            corlo_prompt = _build_fallback_prompt(
+            corlo_prompt = _build_fallback_corlo_prompt(
                 user_input, role, task_type, industry, intent,
                 tool_name, tool_info, policy_block, sensitivity
             )
     else:
-        corlo_prompt = _build_fallback_prompt(
+        corlo_prompt = _build_fallback_corlo_prompt(
             user_input, role, task_type, industry, intent,
             tool_name, tool_info, policy_block, sensitivity
         )
