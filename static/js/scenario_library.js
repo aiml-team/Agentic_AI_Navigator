@@ -367,9 +367,10 @@
         data-scenario="${encodeURIComponent(s.scenario || '')}"
         data-mega="${_esc(s.mega_group || '')}"
         data-cat="${_esc(s.category || '')}"
-        data-persona="${_esc(s.persona || '')}">
+        data-persona="${_esc(s.persona || '')}"
+        data-task-type="${_esc(s.task_type || '')}">
         <div class="sl-card-meta">
-          ${s.persona ? `<span class="sl-card-persona">👤 ${_esc(s.persona)}</span>` : ''}
+          ${s.task_type ? `<span class="sl-card-persona">🏷 ${_esc(s.task_type)}</span>` : ''}
         </div>
         <div class="sl-card-title">${_esc(s.title || '')}</div>
         <div class="sl-card-body">${_esc(preview)}</div>
@@ -391,7 +392,8 @@
         const card     = btn.closest('.sl-card');
         const scenario = decodeURIComponent(card.dataset.scenario);
         const persona  = card.dataset.persona || '';
-        _openGenModal({ scenario, persona });
+        const taskType = card.dataset.taskType || '';
+        _openGenModal({ scenario, persona, taskType });
       });
     });
 
@@ -461,9 +463,9 @@
   }
 
   /* ── Generate modal ── */
-  function _openGenModal({ scenario, persona }) {
+  function _openGenModal({ scenario, persona, taskType }) {
     if (typeof plOpenScenarioGenModal === 'function') {
-      plOpenScenarioGenModal({ body: scenario, activeRole: persona || null });
+      plOpenScenarioGenModal({ body: scenario, activeRole: persona || null, activeTaskType: taskType || null });
       return;
     }
     if (typeof navigateTo === 'function') navigateTo('home');

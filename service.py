@@ -419,6 +419,7 @@ def _load_scenario_library_from_bytes(excel_bytes: bytes) -> list:
         "title":      ["scenario_title", "title", "scenario title", "name"],
         "persona":    ["persona_/_role", "persona", "role", "persona_role", "persona / role"],
         "scenario":   ["scenarios", "scenario", "description", "prompt", "task", "body"],
+        "task_type":  ["task_type", "task type", "tasktype", "type"],
     }
 
     def _find_col(key):
@@ -428,12 +429,13 @@ def _load_scenario_library_from_bytes(excel_bytes: bytes) -> list:
                 return col_lookup[n]
         return None
 
-    col_mega     = _find_col("mega_group")
-    col_category = _find_col("category")
-    col_phase    = _find_col("phase")
-    col_title    = _find_col("title")
-    col_persona  = _find_col("persona")
-    col_scenario = _find_col("scenario")
+    col_mega      = _find_col("mega_group")
+    col_category  = _find_col("category")
+    col_phase     = _find_col("phase")
+    col_title     = _find_col("title")
+    col_persona   = _find_col("persona")
+    col_scenario  = _find_col("scenario")
+    col_task_type = _find_col("task_type")
 
     if not col_title and not col_scenario:
         raise ValueError(
@@ -446,12 +448,13 @@ def _load_scenario_library_from_bytes(excel_bytes: bytes) -> list:
     last_cat  = ""
 
     for _, row in df.iterrows():
-        mega     = _safe_val(row[col_mega])     if col_mega     else ""
-        category = _safe_val(row[col_category]) if col_category else ""
-        phase    = _safe_val(row[col_phase])    if col_phase    else ""
-        title    = _safe_val(row[col_title])    if col_title    else ""
-        persona  = _safe_val(row[col_persona])  if col_persona  else ""
-        scenario = _safe_val(row[col_scenario]) if col_scenario else ""
+        mega      = _safe_val(row[col_mega])      if col_mega      else ""
+        category  = _safe_val(row[col_category])  if col_category  else ""
+        phase     = _safe_val(row[col_phase])     if col_phase     else ""
+        title     = _safe_val(row[col_title])     if col_title     else ""
+        persona   = _safe_val(row[col_persona])   if col_persona   else ""
+        scenario  = _safe_val(row[col_scenario])  if col_scenario  else ""
+        task_type = _safe_val(row[col_task_type]) if col_task_type else ""
 
         # Carry forward mega-group / category for merged cells
         if mega:
@@ -478,13 +481,14 @@ def _load_scenario_library_from_bytes(excel_bytes: bytes) -> list:
             "title":      title,
             "persona":    persona,
             "scenario":   scenario,
+            "task_type":  task_type,
         })
 
     return scenarios
 
 
 def reload_scenario_library(excel_bytes: bytes = None,
-                             excel_path: str = "AI_Navigator_Scenario_Library_Refined.xlsx"):
+                             excel_path: str = "AI_Navigator_Scenarios.xlsx"):
     """
     (Re)load the scenario library from uploaded bytes or a disk path.
     Mutates SCENARIO_LIBRARY in-place.

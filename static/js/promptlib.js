@@ -546,39 +546,14 @@ function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
   const taskSel = document.getElementById('scenarioTaskType');
   const desc    = document.getElementById('scenarioDesc');
 
-  if (!modal || !roleSel || !taskSel || !desc) {
+  if (!modal || !roleSel || !desc) {
     document.getElementById('btnGenerate')?.click();
     return;
-  }
-
-  function _inferTaskType(role) {
-    if (!role) return null;
-    const r = role.toLowerCase();
-    if (r.includes('dev') || r.includes('tech') || r.includes('architect') || r.includes('abap') || r.includes('engineer'))
-      return 'Code & Dev';
-    if (r.includes('analyst') || r.includes('data') || r.includes('bi') || r.includes('insight'))
-      return 'Data Analysis';
-    if (r.includes('sales') || r.includes('bd') || r.includes('account exec') || r.includes('bdr') || r.includes('ae'))
-      return 'Communication';
-    if (r.includes('market') || r.includes('content') || r.includes('comms') || r.includes('event'))
-      return 'Creative Content';
-    if (r.includes('hr') || r.includes('people') || r.includes('talent') || r.includes('recruit'))
-      return 'Writing & Docs';
-    if (r.includes('financ') || r.includes('account') || r.includes('cfo') || r.includes('controller'))
-      return 'Data Analysis';
-    if (r.includes('exec') || r.includes('director') || r.includes('cio') || r.includes('ceo') || r.includes('vp') || r.includes('head'))
-      return 'Strategy & Planning';
-    if (r.includes('pm') || r.includes('project') || r.includes('delivery') || r.includes('pmo'))
-      return 'Strategy & Planning';
-    if (r.includes('consult') || r.includes('manager') || r.includes('lead') || r.includes('functional'))
-      return 'Strategy & Planning';
-    return null;
   }
 
   function _populateAndOpen(allRoles) {
     const activeFilterRole = (typeof window.slGetActiveRole === 'function') ? window.slGetActiveRole() : '';
     const currentAppRole = (typeof window.currentRole === 'string' ? window.currentRole : '') || '';
-    const currentAppTaskType = (typeof window.currentTaskType === 'string' ? window.currentTaskType : '') || '';
 
     roleSel.innerHTML = '<option value="">— Select a role —</option>' +
       allRoles.map(r => `<option value="${plEscapeHtml(r)}">${plEscapeHtml(r)}</option>`).join('');
@@ -598,12 +573,7 @@ function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
       }
     }
 
-    const defaultTask = _inferTaskType(roleSel.value)
-      || activeTaskType
-      || currentAppTaskType
-      || (taskHomeSel ? taskHomeSel.value : '')
-      || 'Research & Analysis';
-    taskSel.textContent = defaultTask;
+    if (taskSel) taskSel.textContent = activeTaskType || '—';
 
     desc.value = body || '';
 
@@ -630,7 +600,7 @@ function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
       close();
 
       const role     = (roleSel.value || '').trim();
-      const taskType = (taskSel.textContent || '').trim();
+      const taskType = (taskSel?.textContent || '').trim().replace(/^—$/, '');
       const taskDesc = desc.value.trim();
 
       if (!taskDesc) return;
