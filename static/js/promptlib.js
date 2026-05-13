@@ -507,6 +507,32 @@ function plInitRoleSelect() {
   });
 }
 
+let _plRolesCache = null;
+window.plClearRolesCache = () => { _plRolesCache = null; };
+
+async function _plFetchAllRoles() {
+  if (_plRolesCache && _plRolesCache.length) return _plRolesCache;
+  if (typeof window.slGetAllRoles === 'function') {
+    const r = window.slGetAllRoles();
+    if (r.length) { _plRolesCache = r; return r; }
+  }
+  try {
+    const res  = await fetch('/api/scenarios');
+    const data = await res.json();
+    const seen = new Set();
+    (data.scenarios || []).forEach(s => {
+      (s.persona || '').split(/[,\/]/).forEach(p => {
+        const t = p.trim();
+        if (t) seen.add(t);
+      });
+    });
+    _plRolesCache = [...seen].sort();
+  } catch {
+    _plRolesCache = [];
+  }
+  return _plRolesCache;
+}
+
 function plOpenScenarioGenModal({ body, activeRole }) {
   const modal = document.getElementById('scenarioGenModal');
   const closeBtn = document.getElementById('btnCloseScenarioGenModal');
@@ -520,20 +546,11 @@ function plOpenScenarioGenModal({ body, activeRole }) {
   const taskSel = document.getElementById('scenarioTaskType');
   const desc    = document.getElementById('scenarioDesc');
 
-  // Safety: if modal not in DOM, fallback to old behavior
   if (!modal || !roleSel || !taskSel || !desc) {
     document.getElementById('btnGenerate')?.click();
     return;
   }
 
-  // ── Sync role from scenario persona, fallback to home role ──
-  if (activeRole) {
-    roleSel.value = activeRole;
-  } else if (roleHomeSel) {
-    roleSel.value = roleHomeSel.value || 'Consultant / Manager';
-  }
-
-  // Derive task type from persona keywords
   function _inferTaskType(role) {
     if (!role) return null;
     const r = role.toLowerCase();
@@ -558,73 +575,83 @@ function plOpenScenarioGenModal({ body, activeRole }) {
     return null;
   }
 
-  const defaultTask = _inferTaskType(activeRole) || _inferTaskType(roleSel.value) || null;
-  if (defaultTask) {
-    taskSel.value = defaultTask;
-  } else if (taskHomeSel) {
-    taskSel.value = taskHomeSel.value || 'Research & Analysis';
+  function _populateAndOpen(allRoles) {
+    const activeFilterRole = (typeof window.slGetActiveRole === 'function') ? window.slGetActiveRole() : '';
+
+    roleSel.innerHTML = '<option value="">— Select a role —</option>' +
+      allRoles.map(r => `<option value="${plEscapeHtml(r)}">${plEscapeHtml(r)}</option>`).join('');
+
+    const preferredRole = activeRole || activeFilterRole || '';
+    if (preferredRole) {
+      roleSel.value = preferredRole;
+      if (!roleSel.value) {
+        const match = allRoles.find(r => r.toLowerCase() === preferredRole.toLowerCase());
+        if (match) roleSel.value = match;
+      }
+    }
+
+    const defaultTask = _inferTaskType(roleSel.value) || null;
+    if (defaultTask) {
+      taskSel.value = defaultTask;
+    } else if (taskHomeSel) {
+      taskSel.value = taskHomeSel.value || 'Research & Analysis';
+    }
+
+    desc.value = body || '';
+
+    const hint = document.getElementById('scenarioPlaceholderHint');
+    const matches = (desc.value.match(/\[[^\]]+\]/g) || []);
+    if (hint) {
+      if (matches.length) {
+        const uniq = [...new Set(matches)].slice(0, 8);
+        hint.style.display = 'block';
+        hint.innerHTML = `Placeholders detected: ${uniq.map(x => `<code>${plEscapeHtml(x)}</code>`).join(' ')}<br/>Tip: replace these before generating.`;
+      } else {
+        hint.style.display = 'none';
+        hint.innerHTML = '';
+      }
+    }
+
+    const close = () => modal.classList.remove('open');
+    closeBtn.onclick = close;
+    cancelBtn.onclick = close;
+    modal.onclick = (e) => { if (e.target === modal) close(); };
+    document.onkeydown = (e) => { if (e.key === 'Escape') close(); };
+
+    confirmBtn.onclick = async () => {
+      close();
+
+      const role     = (roleSel.value || '').trim();
+      const taskType = (taskSel.value || '').trim();
+      const taskDesc = desc.value.trim();
+
+      if (!taskDesc) return;
+
+      if (typeof navigateTo === 'function') navigateTo('home');
+
+      if (roleHomeSel) roleHomeSel.value = role;
+      if (taskHomeSel) taskHomeSel.value = taskType;
+
+      if (typeof _chatReset === 'function') _chatReset();
+
+      if (typeof _chatAddMessage === 'function') {
+        _chatAddMessage('user', taskDesc);
+      }
+
+      if (typeof _chatMarkReady === 'function') {
+        _chatMarkReady({ role, task_type: taskType, task_description: taskDesc });
+      }
+
+      if (typeof _chatShowTaskSummary === 'function') {
+        _chatShowTaskSummary();
+      }
+    };
+
+    modal.classList.add('open');
   }
 
-  desc.value = body || '';
-
-  // Placeholder hint (simple detection: [something])
-  const hint = document.getElementById('scenarioPlaceholderHint');
-  const matches = (desc.value.match(/\[[^\]]+\]/g) || []);
-  if (hint) {
-    if (matches.length) {
-      const uniq = [...new Set(matches)].slice(0, 8);
-      hint.style.display = 'block';
-      hint.innerHTML = `Placeholders detected: ${uniq.map(x => `<code>${plEscapeHtml(x)}</code>`).join(' ')}<br/>Tip: replace these before generating.`;
-    } else {
-      hint.style.display = 'none';
-      hint.innerHTML = '';
-    }
-  }
-
-  const close = () => modal.classList.remove('open');
-
-  closeBtn.onclick = close;
-  cancelBtn.onclick = close;
-  modal.onclick = (e) => { if (e.target === modal) close(); };
-
-  document.onkeydown = (e) => { if (e.key === 'Escape') close(); };
-
-  confirmBtn.onclick = async () => {
-    close();
-
-    const role     = (roleSel.value || '').trim();
-    const taskType = (taskSel.value || '').trim();
-    const taskDesc = desc.value.trim();
-
-    if (!taskDesc) return;
-
-    // Navigate to Home
-    if (typeof navigateTo === 'function') navigateTo('home');
-
-    // Sync hidden fields
-    if (roleHomeSel) roleHomeSel.value = role;
-    if (taskHomeSel) taskHomeSel.value = taskType;
-
-    // Reset the chat so it starts fresh with this scenario
-    if (typeof _chatReset === 'function') _chatReset();
-
-    // Inject the scenario body as a user message in the chat
-    if (typeof _chatAddMessage === 'function') {
-      _chatAddMessage('user', taskDesc);
-    }
-
-    // Mark ready with all extracted info — no questions asked
-    if (typeof _chatMarkReady === 'function') {
-      _chatMarkReady({ role, task_type: taskType, task_description: taskDesc });
-    }
-
-    // Show the task summary in chat so user can review, then click Generate
-    if (typeof _chatShowTaskSummary === 'function') {
-      _chatShowTaskSummary();
-    }
-  };
-
-  modal.classList.add('open');
+  roleSel.innerHTML = '<option value="">Loading roles…</option>';
+  _plFetchAllRoles().then(allRoles => _populateAndOpen(allRoles));
 }
 
 

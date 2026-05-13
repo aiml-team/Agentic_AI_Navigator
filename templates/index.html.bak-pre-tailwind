@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Navigator</title>
-  <link rel="icon" type="image/svg+xml" href="/static/ai_compass_true_ui.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/Images/Navigator.svg"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -104,11 +104,11 @@
       <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
-      <img src="/static/Logo-White.png" alt="Logo" class="hdr-logo" onerror="this.style.display='none'"/>
+      <img src="/static/Images/Logo-White.png" alt="Logo" class="hdr-logo" onerror="this.style.display='none'"/>
     </div>
     <div class="hdr-center">
       <div class="hdr-title-wrap">
-        <img src="/static/ai_compass_true_ui.svg" alt="AI Compass" class="hdr-compass-icon"/>
+        <img src="/static/Images/Navigator.svg" alt="AI Compass" class="hdr-compass-icon"/>
         <div class="hdr-title">AI Navigator</div>
       </div>
     </div>

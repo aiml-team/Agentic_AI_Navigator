@@ -94,7 +94,7 @@ const TOOL_LOGO_MAP = [
   ['langchain',   'langchain'],
 ];
 
-const NAVIGATOR_LOGO_URL = '/static/ai_compass_true_ui.svg';
+const NAVIGATOR_LOGO_URL = '/static/Images/Navigator.svg';
 
 /**
  * PRIMARY icon source: the Excel registry (AI_TOOLS_Roles.xlsx).
@@ -157,7 +157,7 @@ function _autoSlug(name) {
  *  3. TOOL_FAVICON_MAP — clearbit logo → Google favicon chain for known domains
  *  4. TOOL_LOGO_MAP — simpleicons.org brand SVG by name substring
  *  5. Auto-derived simpleicons slug from tool name
- *  6. Navigator compass (/static/ai_compass_true_ui.svg) — final fallback
+ *  6. Navigator compass (/static/Images/Navigator.svg) — final fallback
  *
  * @param {string} toolName   e.g. "ChatGPT (OpenAI)", "Cassidy"
  * @param {string} customIcon icon value from registry (Excel `icon` column or DB override)
@@ -1507,7 +1507,7 @@ async function loadHistory() {
 
     list.innerHTML = data.map(row => `
       <div class="history-item">
-        <div class="history-item-icon"><img src="/static/ai_compass_true_ui.svg" alt="AI Navigator" /></div>
+        <div class="history-item-icon"><img src="/static/Images/Navigator.svg" alt="AI Navigator" /></div>
         <div class="history-item-body">
           <div class="history-item-input" title="${escapeHtml(row.raw_input || '')}">${escapeHtml(row.raw_input || '—')}</div>
           <div class="history-item-meta">
@@ -2701,7 +2701,7 @@ function _chatRenderMessage(role, content) {
   const container = document.getElementById('chatMessages');
   if (!container) return;
   const avatarHtml = role === 'agent'
-    ? '<img src="/static/ai_compass_true_ui.svg" alt="AI" class="chat-avatar-img"/>'
+    ? '<img src="/static/Images/Navigator.svg" alt="AI" class="chat-avatar-img"/>'
     : _userInitialsAvatar();
   const div = document.createElement('div');
   div.className = `chat-msg ${role}`;
@@ -2749,7 +2749,7 @@ function _chatRenderAgentStreaming(content) {
   div.className = 'chat-msg agent';
   div.innerHTML = `
     <div class="chat-avatar">
-      <img src="/static/ai_compass_true_ui.svg" alt="AI" class="chat-avatar-img"/>
+      <img src="/static/Images/Navigator.svg" alt="AI" class="chat-avatar-img"/>
     </div>
     <div class="chat-bubble">
       <span class="chat-streaming-text"></span><span class="chat-caret">▍</span>

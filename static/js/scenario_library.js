@@ -512,6 +512,7 @@
     } catch (e) {
       SL_DATA = [];
     }
+    if (typeof window.plClearRolesCache === 'function') window.plClearRolesCache();
 
     if (loadingEl) loadingEl.style.display = 'none';
     if (mainEl)    mainEl.style.display    = '';
@@ -856,5 +857,16 @@
   window.slLoadScenarios   = loadScenarios;
   window.slRenderFavorites = renderFavorites;
   window.slLoadFavorites   = _loadFavorites;
+  window.slGetAllRoles     = () => {
+    const seen = new Set();
+    SL_DATA.forEach(s => {
+      (s.persona || '').split(/[,\/]/).forEach(r => {
+        const t = r.trim();
+        if (t) seen.add(t);
+      });
+    });
+    return [...seen].sort();
+  };
+  window.slGetActiveRole   = () => SL_ACTIVE_ROLE;
 
 })();

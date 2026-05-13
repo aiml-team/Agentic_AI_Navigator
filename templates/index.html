@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Navigator</title>
-  <link rel="icon" type="image/svg+xml" href="/static/ai_compass_true_ui.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/Images/Navigator.svg"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -31,7 +31,7 @@
 
     <!-- NTT corporate logo top-left -->
     <div style="padding:24px 0 12px 0;">
-      <img src="/static/Logo-White.png" alt="NTT DATA" style="height:28px;width:auto;display:block;" onerror="this.style.display='none'"/>
+      <img src="/static/Images/Logo-White.png" alt="NTT DATA" style="height:28px;width:auto;display:block;" onerror="this.style.display='none'"/>
     </div>
 
     <!-- Two-column hero, centred vertically -->
@@ -40,7 +40,7 @@
       <!-- ── LEFT: BRAND ── -->
       <div style="flex:1 1 420px;min-width:0;max-width:560px;" class="animate-auth-fade-in">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <img src="/static/ai_compass_true_ui.svg" alt=""
+          <img src="/static/Images/Navigator.svg" alt=""
                width="56" height="56"
                style="width:56px;height:56px;display:block;flex-shrink:0;"/>
           <div style="font-size:56px;font-weight:800;color:var(--primary);letter-spacing:-0.03em;line-height:1;">
@@ -254,12 +254,12 @@
         <span class="block h-[2px] w-[20px] bg-slate-700 rounded-sm transition-all duration-300"></span>
         <span class="block h-[2px] w-[20px] bg-slate-700 rounded-sm transition-all duration-300"></span>
       </button>
-      <img src="/static/Logo-White.png" alt="NTT DATA" class="h-8 w-auto flex-shrink-0" onerror="this.style.display='none'"/>
+      <img src="/static/Images/Logo-White.png" alt="NTT DATA" class="h-8 w-auto flex-shrink-0" onerror="this.style.display='none'"/>
 
       <div class="h-5 w-px bg-slate-200 flex-shrink-0 mx-1"></div>
 
       <div class="flex items-center gap-1.5 min-w-0">
-        <img src="/static/ai_compass_true_ui.svg" alt="" class="w-[28px] h-[28px] flex-shrink-0"/>
+        <img src="/static/Images/Navigator.svg" alt="" class="w-[28px] h-[28px] flex-shrink-0"/>
         <div class="text-[17px] font-bold text-[var(--primary-dark)] tracking-tight truncate">
           AI Navigator
         </div>
@@ -582,33 +582,28 @@
               <div id="policyFlagsBox"></div>
               <div id="alternativesBox"></div>
 
-              <!-- Confidentiality reminder — one-liner, full banner only on
-                   first result per session (or when re-expanded via the chip). -->
-              <div id="confidentialityNotice" style="display:none;align-items:center;gap:10px;
-                padding:10px 14px;border-radius:10px;margin-bottom:14px;
-                background:#FFF8E6;border:1.5px solid #FCD34D;position:relative;">
-                <span style="font-size:15px;flex-shrink:0;">🔒</span>
-                <div style="font-size:12.5px;color:#78350F;line-height:1.45;flex:1;">
-                  Don't paste confidential data. Review every output before sharing externally.
+              <div style="
+                display:flex;
+                align-items:flex-start;
+                gap:10px;
+                padding:12px 14px;
+                border-radius:10px;
+                margin-bottom:14px;
+                background:#FFFBEB;
+                border:1px solid #FDE68A;
+              ">
+                
+                <span style="font-size:16px;">🔒</span>
+
+                <div style="font-size:12.5px; color:#78350F; line-height:1.5;">
+                  <strong>Important Reminder — Handle with Care</strong><br>
+                  Do not enter confidential, personal, or commercially sensitive company data into AI tools.
+                  Always use only approved tools from your organisation's registry, and review all AI-generated output before sharing externally.
                 </div>
-                <button id="confDismissBtn" type="button"
-                  style="background:transparent;border:none;color:#92400E;font-size:11.5px;font-weight:700;cursor:pointer;padding:4px 8px;border-radius:6px;flex-shrink:0;"
-                  onmouseover="this.style.background='#FCD34D';" onmouseout="this.style.background='transparent';">
-                  Got it
-                </button>
+
               </div>
 
-              <!-- Compact reminder pill — shown after the user has dismissed the
-                   full banner once per session. Clicking it re-expands. -->
-              <button id="confidentialityChip" type="button" style="display:none;align-items:center;gap:6px;
-                padding:5px 11px;border-radius:999px;margin-bottom:14px;
-                background:#FFFBEB;border:1px solid #FCD34D;
-                font-size:11.5px;font-weight:600;color:#92400E;cursor:pointer;
-                transition:background 0.15s,border-color 0.15s;"
-                onmouseover="this.style.background='#FEF3C7';" onmouseout="this.style.background='#FFFBEB';"
-                title="Show confidentiality reminder">
-                <span style="font-size:13px;">🔒</span> Confidentiality reminder
-              </button>
+              
 
               <div class="output-tabs">
                 <button class="output-tab active" data-out="prompt">📝 Prompt</button>
@@ -874,9 +869,30 @@
 
       <div class="page-header">
         <div>
-          <h2 class="page-title">Scenarios Admin</h2>
-          <p class="page-subtitle">Review user-submitted scenario suggestions and manage the scenario log.</p>
+          <div class="title-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+
+            <h2 class="page-title">Scenarios Admin</h2>
+          </div>
+
+          <p class="page-subtitle">
+            Review user-submitted scenario suggestions and manage the scenario log.
+          </p>
         </div>
+
+        <style>
+          .title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* space between icon and text */
+          }
+
+          .title-row svg {
+            color: var(--text2); /* matches your theme */
+          }
+        </style>
+
+
         <button class="btn btn-secondary" id="btnRefreshAdminScenarios">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
           Refresh
@@ -1135,9 +1151,61 @@
 <div class="fu-overlay" id="puOverlay"></div>
 <div class="fu-modal" id="puModal">
   <div class="fu-modal-header">
-    <span>📋 Upload Policy Document</span>
-    <button class="fu-close-btn" id="puCloseBtn">✕</button>
-  </div>
+  <span class="header-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Upload Policy Document
+  </span>
+
+  <button class="fu-close-btn" id="puCloseBtn">✕</button>
+</div>
+
+<style>
+  .fu-modal-header {
+    display: flex;
+    justify-content: space-between; /* title left, button right */
+    align-items: center;
+  }
+
+  .header-title {
+    display: inline-flex;   /* keeps icon + text in one line */
+    align-items: center;    /* vertical alignment */
+    gap: 6px;               /* space between icon & text */
+  }
+
+  .fu-close-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+  }
+</style><style>
+  .fu-modal-header {
+    display: flex;
+    justify-content: space-between; /* title left, button right */
+    align-items: center;
+  }
+
+  .header-title {
+    display: inline-flex;   /* keeps icon + text in one line */
+    align-items: center;    /* vertical alignment */
+    gap: 6px;               /* space between icon & text */
+  }
+
+  .fu-close-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+  }
+</style>
+
+
   <div class="fu-modal-body">
     <div class="fu-drop-zone" id="puDropZone">
       <div class="fu-drop-icon">📄</div>
@@ -1414,33 +1482,25 @@
       <div class="row2" style="margin-bottom:10px;">
         <div>
           <label class="field-label" for="scenarioRole">Role</label>
-          <input type="text" id="scenarioRole" list="scenarioRoleList" placeholder="Select or type role..." autocomplete="off" />
-          <datalist id="scenarioRoleList">
-            <option value="Consultant / Manager"></option>
-            <option value="Executive / Director"></option>
-            <option value="Developer / Technical"></option>
-            <option value="Business Analyst"></option>
-            <option value="Sales / BD"></option>
-            <option value="Marketing / Comms"></option>
-            <option value="HR / People Ops"></option>
-            <option value="Finance / Accounting"></option>
-          </datalist>
+          <select id="scenarioRole" style="width:100%;padding:9px 11px;font-size:13px;color:var(--text);background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;cursor:pointer;transition:border-color .15s,box-shadow .15s;" onfocus="this.style.borderColor='var(--border-focus)';this.style.boxShadow='0 0 0 3px #2563eb1f';" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='';">
+            <option value="">— Select a role —</option>
+          </select>
         </div>
         <div>
           <label class="field-label" for="scenarioTaskType">Task Type</label>
-          <input type="text" id="scenarioTaskType" list="scenarioTaskTypeList" placeholder="Select or type task type..." autocomplete="off" />
-          <datalist id="scenarioTaskTypeList">
-            <option value="Research &amp; Analysis"></option>
-            <option value="Writing &amp; Docs"></option>
-            <option value="Strategy &amp; Planning"></option>
-            <option value="Data Analysis"></option>
-            <option value="Code &amp; Dev"></option>
-            <option value="Creative Content"></option>
-            <option value="Communication"></option>
-            <option value="Learning &amp; Training"></option>
-            <option value="Process Automation"></option>
-            <option value="Decision Support"></option>
-          </datalist>
+          <select id="scenarioTaskType" style="width:100%;padding:9px 11px;font-size:13px;color:var(--text);background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;cursor:pointer;transition:border-color .15s,box-shadow .15s;" onfocus="this.style.borderColor='var(--border-focus)';this.style.boxShadow='0 0 0 3px #2563eb1f';" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='';">
+            <option value="">— Select a task type —</option>
+            <option value="Research &amp; Analysis">Research &amp; Analysis</option>
+            <option value="Writing &amp; Docs">Writing &amp; Docs</option>
+            <option value="Strategy &amp; Planning">Strategy &amp; Planning</option>
+            <option value="Data Analysis">Data Analysis</option>
+            <option value="Code &amp; Dev">Code &amp; Dev</option>
+            <option value="Creative Content">Creative Content</option>
+            <option value="Communication">Communication</option>
+            <option value="Learning &amp; Training">Learning &amp; Training</option>
+            <option value="Process Automation">Process Automation</option>
+            <option value="Decision Support">Decision Support</option>
+          </select>
         </div>
       </div>
 
