@@ -790,6 +790,7 @@ async function handleGenerate() {
 }
 
 async function _runGenerate(input, role, taskType) {
+  clearHomeResponseOnly();
   if (_runAbortController) {
     _runAbortController.abort();
   }
@@ -840,6 +841,53 @@ async function _runGenerate(input, role, taskType) {
     goToStep(1);
     showToast(`Error: ${err.message}`, 'error');
   }
+}
+
+
+function clearHomeResponseOnly() {
+  // Abort any previous running generation
+  if (_runAbortController) {
+    _runAbortController.abort();
+    _runAbortController = null;
+  }
+
+  // Clear result state
+  currentAuditId = null;
+  currentOutput = '';
+  currentCorlo = '';
+  currentInput = '';
+  currentTool = '';
+
+  // Clear visible response UI
+  [
+    'policyBlockedBox',
+    'resultMeta',
+    'toolRecBox',
+    'policyFlagsBox',
+    'alternativesBox',
+    'resultPrompt',
+    'resultPolicies'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+
+  const revisedBanner = document.getElementById('revisedBanner');
+  if (revisedBanner) {
+    revisedBanner.style.display = 'none';
+    revisedBanner.textContent = '';
+  }
+
+  const refinementInput = document.getElementById('refinementInput');
+  if (refinementInput) refinementInput.value = '';
+
+  const toolbar = document.getElementById('promptToolbar');
+  if (toolbar) toolbar.style.display = 'none';
+
+  document.querySelectorAll('.star').forEach(s => s.classList.remove('lit'));
+
+  // Show clean waiting state on the right side
+  goToStep(1);
 }
 
 function resetToStep1() {

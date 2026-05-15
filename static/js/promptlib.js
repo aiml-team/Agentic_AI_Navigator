@@ -610,6 +610,10 @@ function plOpenScenarioGenModal({ body, activeRole, activeTaskType }) {
       if (roleHomeSel) roleHomeSel.value = role;
       if (taskHomeSel) taskHomeSel.value = taskType;
 
+      if (typeof clearHomeResponseOnly === 'function') {
+        clearHomeResponseOnly();
+      }
+
       if (typeof _chatReset === 'function') _chatReset();
 
       if (typeof _chatAddMessage === 'function') {

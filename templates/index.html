@@ -395,7 +395,10 @@
 <aside id="adminRail" aria-label="Admin navigation"
        class="fixed left-0 z-[80] bg-white border-r border-slate-200 overflow-y-auto"
        style="top:112px;bottom:0;width:220px;">
-  <div class="px-3 py-4">
+      <button id="adminRailCollapseBtn" class="admin-rail-toggle-btn" type="button" title="Hide admin menu">
+        ‹
+      </button>
+  <div id="adminRailContent" class="admin-rail-content px-3 py-4">
     <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 px-3 mb-3">Admin</div>
     <nav class="flex flex-col gap-0.5">
       <button id="railAnalytics" class="rail-item">

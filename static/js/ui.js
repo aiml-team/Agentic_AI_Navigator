@@ -466,3 +466,49 @@ function setLocalAuditEdits(auditId, patch) {
     localStorage.setItem('audit_edits', JSON.stringify(all));
   } catch {}
 }
+
+
+
+// ─── ADMIN RAIL HIDE / SHOW ───
+function initAdminRailCollapse() {
+  const rail = document.getElementById('adminRail');
+  const content = document.getElementById('adminRailContent');
+  const btn = document.getElementById('adminRailCollapseBtn');
+
+  if (!rail || !content || !btn) return;
+
+  const applyState = (hidden) => {
+  document.body.classList.toggle('admin-rail-collapsed', hidden);
+
+  content.style.display = hidden ? 'none' : '';
+  rail.style.width = hidden ? '24px' : '220px';
+
+  // ✅ ADD THIS BLOCK
+  const main = document.getElementById('mainContent');
+  if (main) {
+    main.style.paddingLeft = hidden ? '0px' : '220px';
+  }
+
+  btn.textContent = hidden ? '»' : '‹';
+  btn.title = hidden ? 'Show admin menu' : 'Hide admin menu';
+
+  localStorage.setItem('adminRailCollapsed', hidden ? 'true' : 'false');
+};
+
+  const saved = localStorage.getItem('adminRailCollapsed') === 'true';
+  applyState(saved);
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const hidden = !document.body.classList.contains('admin-rail-collapsed');
+    applyState(hidden);
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminRailCollapse);
+} else {
+  initAdminRailCollapse();
+}

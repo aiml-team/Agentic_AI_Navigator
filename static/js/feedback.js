@@ -20,7 +20,7 @@ function getLoggedInEmail() {
      FEEDBACK FORM MODAL
   ═══════════════════════════════════════ */
   const ISSUE_TYPES = [
-    'Wrong Tool', 'Poor Output', 'Missing Feature',
+    'Excellent', 'Great', 'Amazing', 'Outstanding', 'Highly Satisfied', 'Wrong Tool', 'Poor Output', 'Missing Feature',
     'Slow Response', 'UI Issue', 'Other'
   ];
 
