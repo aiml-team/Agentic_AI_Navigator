@@ -57,3 +57,12 @@ body.admin-rail-collapsed .main {
 body.admin-rail-collapsed .admin-rail-toggle-btn {
   left: 0 !important;
 }
+
+
+body:not(.has-admin-rail) #adminRail {
+  display: none !important;
+}
+
+body:not(.has-admin-rail) .main {
+  padding-left: 0 !important;
+}

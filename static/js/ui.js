@@ -237,7 +237,8 @@ async function openLogModal(auditId) {
       /* 3. Show the summary bar tags (Role / Task Type chips) */
       if (typeof _chatUpdateSummary === 'function') _chatUpdateSummary();
 
-      /* 4. Show the ready banner + enable Generate button */
+      /* 4. Mark chat as ready + show the ready banner + enable Generate button */
+      if (typeof _chatReady !== 'undefined') _chatReady = true;
       document.getElementById('chatReadyBanner')?.classList.add('visible');
       const genBtn = document.getElementById('chatGenerateBtn');
       if (genBtn) genBtn.disabled = false;

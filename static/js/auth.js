@@ -54,11 +54,23 @@
       return;
     }
     document.body.classList.remove('has-admin-rail');
-    ADMIN_ONLY.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => {
-        el.style.setProperty('display', 'none', 'important');
-      });
-    });
+document.body.classList.remove('admin-rail-collapsed');
+
+const adminRail = document.getElementById('adminRail');
+if (adminRail) {
+  adminRail.style.setProperty('display', 'none', 'important');
+}
+
+const main = document.getElementById('mainContent');
+if (main) {
+  main.style.paddingLeft = '0px';
+}
+
+ADMIN_ONLY.forEach(sel => {
+  document.querySelectorAll(sel).forEach(el => {
+    el.style.setProperty('display', 'none', 'important');
+  });
+});
   }
 
   /* Rail buttons delegate to the existing drawer handlers via element.click(). */

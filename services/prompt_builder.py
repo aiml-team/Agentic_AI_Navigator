@@ -5,8 +5,10 @@ from services.database import get_db
 
 
 def _build_system_prompt(role: str, task_type: str, sensitivity: str,
-                          industry: str, intent: str, tool_name: str,
-                          tool_info: dict) -> str:
+                          industry: str, intent: str, tool_name: str = "",
+                          tool_info: dict = None) -> str:
+    if tool_info is None:
+        tool_info = {}
     effective_role = role.strip() if role and role != "general" else "expert enterprise professional"
 
     role_behaviour = {
@@ -75,18 +77,10 @@ def _build_system_prompt(role: str, task_type: str, sensitivity: str,
         ),
     }.get(sensitivity, "Standard data handling applies.")
 
-    tool_hint = (
-        f"The output will be used in {tool_name} ({tool_info.get('category', 'AI Tool')}). "
-        f"Structure and format the response to be directly usable in that tool."
-    )
-
     return f"""You are a {effective_role} operating in the {industry} industry.
 
 BEHAVIOURAL INSTRUCTIONS FOR THIS ROLE:
 {role_behaviour}
-
-TOOL CONTEXT:
-{tool_hint}
 
 DATA HANDLING RULES:
 {sensitivity_rules}
@@ -136,9 +130,6 @@ You write clean, production-ready code with proper error handling and comments.
 - Include: any dependencies, prerequisites, or setup steps needed
 - Consider: edge cases, error handling, and security implications
 
-**TOOL CONTEXT**
-Output is designed for use in {tool_name} ({tool_info.get('category', 'AI Tool')}).
-
 **CONSTRAINTS**
 {policy_section}
 
@@ -166,9 +157,6 @@ Your output must be ready to copy and send — no placeholders, no rewrites need
 - Body: clear, well-structured, purpose-driven
 - Closing: appropriate call to action or next step
 
-**TOOL CONTEXT**
-Optimised for {tool_name}.
-
 **CONSTRAINTS**
 {policy_section}
 
@@ -193,9 +181,6 @@ Your job is to turn data and observations into clear, actionable intelligence.
 - Quantify where possible; flag where data is missing or assumptions are made
 - Separate facts (what the data shows) from interpretation (what it might mean)
 - Recommend concrete next steps based on the findings
-
-**TOOL CONTEXT**
-Analysis structured for use in {tool_name} ({tool_info.get('category', 'AI Tool')}).
 
 **CONSTRAINTS**
 {policy_section}
@@ -230,9 +215,6 @@ Produce the analysis now."""
 - Recommendations: specific and actionable, not generic
 - Length: as long as the brief requires — no padding, no omissions
 
-**TOOL CONTEXT**
-Formatted for {tool_name}.
-
 **CONSTRAINTS**
 {policy_section}
 
@@ -262,9 +244,6 @@ Your output must be persuasive, professional, and immediately presentable.
 - Address likely objections or concerns pre-emptively
 - Close with a clear, confident ask or call to action
 - Tone: authoritative, client-ready, outcome-focused
-
-**TOOL CONTEXT**
-Built for {tool_name} ({tool_info.get('category', 'AI Tool')}).
 
 **CONSTRAINTS**
 {policy_section}
@@ -298,9 +277,6 @@ Your writing is clear, engaging, and purposeful — it earns the reader's attent
 - Length: exactly as long as the content needs to be
 - Finish: end with purpose — a takeaway, a question, or a clear next step
 
-**TOOL CONTEXT**
-Optimised for {tool_name}.
-
 **CONSTRAINTS**
 {policy_section}
 
@@ -323,9 +299,6 @@ Note: This output is a professional starting point — it must be reviewed by a 
 - Completeness: cover the key clauses/provisions typically needed for this document type
 - Flagging: clearly mark any clause that carries significant risk or needs specialist input
 - Disclaimers: include appropriate review-required notices
-
-**TOOL CONTEXT**
-Drafted using {tool_name}.
 
 **CONSTRAINTS**
 {policy_section}
@@ -351,9 +324,6 @@ You combine deep HR expertise with empathy and clarity, producing people-first d
 - Clarity: accessible to all employees, not just HR professionals
 - Policy alignment: consistent with standard HR best practices for {industry}
 
-**TOOL CONTEXT**
-Formatted for {tool_name}.
-
 **CONSTRAINTS**
 {policy_section}
 
@@ -377,9 +347,6 @@ You provide precise, step-by-step technical guidance that resolves issues effici
 - Be specific: exact commands, settings, or steps — no vague instructions
 - Escalation path: when and how to escalate if the primary fix fails
 - Prevention: note what can be done to prevent recurrence
-
-**TOOL CONTEXT**
-Structured for {tool_name}.
 
 **CONSTRAINTS**
 {policy_section}
@@ -417,7 +384,6 @@ Produce the IT support response now."""
 
 **CONTEXT**
 - Role: {effective_role} | Industry: {industry} | Intent: {intent}
-- Tool: {tool_name} ({tool_info.get('category', 'AI Tool')})
 
 **REQUIREMENTS**
 {task_framing}
@@ -484,7 +450,7 @@ def _build_fallback_corlo_prompt(
 
     return f"""ROLE: You are a {effective_role} working in the {industry} industry.
 
-CONTEXT: You are using {tool_name} ({tool_info.get('category', 'AI Tool')}) to complete a {task_type} task.
+CONTEXT: You are completing a {task_type} task in the {industry} industry.
 
 OBJECTIVE: {user_input}
 
@@ -553,7 +519,6 @@ def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
                 f"- Task type    : {task_type}\n"
                 f"- Industry     : {industry}\n"
                 f"- Intent       : {intent}\n"
-                f"- Target tool  : {tool_name} ({tool_info.get('category', 'AI Tool')})\n"
                 f"- Sensitivity  : {sensitivity}"
                 f"{sensitivity_instruction}"
                 f"{policy_instruction}\n\n"
