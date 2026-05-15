@@ -28,7 +28,7 @@ function getLoggedInEmail() {
 
   let formOverlay, formModal, formBody, formSuccess;
   let selectedRating  = 0;
-  let selectedIssue   = '';
+  let selectedIssues  = [];
   let currentAuditId  = '';
   let selectedFiles   = [];
 
@@ -54,7 +54,7 @@ function getLoggedInEmail() {
     if (!formBody) return;
     selectedFiles  = [];
     selectedRating = 0;
-    selectedIssue  = '';
+    selectedIssues = [];
 
     formBody.innerHTML = `
       <div class="fb-field">
@@ -71,7 +71,7 @@ function getLoggedInEmail() {
       </div>
 
       <div class="fb-field">
-        <label>Issue Type</label>
+        <label>Feedback Type <span style="color:#64748b;font-weight:400;font-size:11px;"></span></label>
         <div class="fb-issue-pills" id="fbIssuePills">
           ${ISSUE_TYPES.map(t => `<button class="fb-pill" data-issue="${t}">${t}</button>`).join('')}
         </div>
@@ -114,15 +114,17 @@ function getLoggedInEmail() {
       });
     });
 
-    /* Issue pills */
+    /* Feedback type pills — multi-select */
     formBody.querySelectorAll('.fb-pill').forEach(pill => {
       pill.addEventListener('click', () => {
-        formBody.querySelectorAll('.fb-pill').forEach(p => p.classList.remove('selected'));
-        if (selectedIssue === pill.dataset.issue) {
-          selectedIssue = '';
-        } else {
+        const val = pill.dataset.issue;
+        const idx = selectedIssues.indexOf(val);
+        if (idx === -1) {
+          selectedIssues.push(val);
           pill.classList.add('selected');
-          selectedIssue = pill.dataset.issue;
+        } else {
+          selectedIssues.splice(idx, 1);
+          pill.classList.remove('selected');
         }
       });
     });
@@ -217,10 +219,21 @@ function getLoggedInEmail() {
     if (btn) btn.disabled = selectedRating === 0;
   }
 
-  function openForm(auditId) {
+  function openForm(auditId, initialRating) {
     currentAuditId = auditId || '';
     if (!formModal) return;
     buildFormBody();
+    if (initialRating && initialRating >= 1 && initialRating <= 5) {
+      selectedRating = initialRating;
+      const stars = formBody.querySelectorAll('.fb-star');
+      const label = formBody.querySelector('#fbStarLabel');
+      highlightStars(stars, selectedRating);
+      if (label) {
+        label.textContent = STAR_LABELS[selectedRating];
+        label.style.color = '#f59e0b';
+      }
+      updateSubmitBtn();
+    }
     formSuccess.classList.remove('show');
     formBody.style.display = '';
     formOverlay.classList.add('open');
@@ -248,7 +261,7 @@ function getLoggedInEmail() {
       fd.append('email',      email);
       fd.append('rating',     selectedRating);
       fd.append('comment',    comment);
-      fd.append('issue_type', selectedIssue);
+      fd.append('issue_type', selectedIssues.join(', '));
       fd.append('audit_id',   currentAuditId);
       fd.append('source',     'form');
       selectedFiles.forEach(f => fd.append('files', f, f.name));

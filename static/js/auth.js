@@ -24,7 +24,6 @@
     '#adminRail',             // persistent admin left rail
     '#slRegisterScenarioBtn', // Add Scenario button in Scenario Library
     '#btnRegisterTool',       // Register tool button in AI Tools
-    '#outputTabPolicies',     // "Policies Applied" tab on result — admin context only
   ];
 
   /* ── selectors that are USER-ONLY (hidden for admins) ── */

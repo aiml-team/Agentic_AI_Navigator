@@ -360,14 +360,6 @@ function _autoRefreshActiveSurface() {
 function initHomePage() {
 
 
-  document.getElementById('btnCopyOutput').addEventListener('click', (e) => {
-    const panel = document.querySelector('.output-panel.active .output-content');
-    if (panel) _copyToClipboard(panel.textContent, () => {
-      _flashCopied(e.currentTarget);
-      showToast('Copied!', 'success');
-    });
-  });
-
   document.getElementById('btnRefine')?.addEventListener('click', handleRefine);
 
   // ── Edit / Copy / Save prompt toolbar ──
@@ -1383,15 +1375,23 @@ async function handleRefine() {
 ══════════════════════════════════════ */
 function initFeedback() {
   const stars = document.querySelectorAll('.star');
+  let hoveredRating = 0;
   stars.forEach(star => {
     star.addEventListener('mouseenter', () => {
-      const r = parseInt(star.dataset.rating);
-      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.rating) <= r));
+      hoveredRating = parseInt(star.dataset.rating);
+      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.rating) <= hoveredRating));
     });
     star.addEventListener('mouseleave', () => {
+      hoveredRating = 0;
       stars.forEach(s => s.classList.remove('lit'));
     });
-    star.addEventListener('click', () => submitFeedback(parseInt(star.dataset.rating)));
+    star.addEventListener('click', () => {
+      const rating = parseInt(star.dataset.rating);
+      stars.forEach((s, i) => s.classList.toggle('lit', i < rating));
+      if (typeof window.openFeedbackForm === 'function') {
+        window.openFeedbackForm(currentAuditId || '', rating);
+      }
+    });
   });
 }
 

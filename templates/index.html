@@ -606,7 +606,7 @@
 
               <div class="output-tabs">
                 <button class="output-tab active" data-out="prompt">📝 Prompt</button>
-                <!-- Policies Applied is admin-only context — hidden for regular users via auth.js -->
+                <!-- Policies Applied tab visible to all users -->
                 <button class="output-tab" data-out="policies" id="outputTabPolicies">🛡️ Policies Applied</button>
               </div>
 
@@ -657,12 +657,7 @@
                   <button class="star" data-rating="4">★</button>
                   <button class="star" data-rating="5">★</button>
                 </div>
-                <div class="feedback-ml">
-                  <button class="btn btn-ghost btn-sm" id="btnCopyOutput">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                    Copy
-                  </button>
-                </div>
+
               </div>
             </div>
 
@@ -1102,9 +1097,15 @@
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title">Task details</h3>
-      <button class="modal-close" id="btnCloseModal">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-primary btn-sm" id="btnRegenerateLog" style="display:flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Regenerate
+        </button>
+        <button class="modal-close" id="btnCloseModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
     </div>
     <div class="modal-body" id="logModalBody"></div>
   </div>

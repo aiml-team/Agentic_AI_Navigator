@@ -169,9 +169,12 @@ function initModal() {
     .addEventListener('click', e => { if (e.target === e.currentTarget) closeLogModal(); });
 }
 
+let _currentLogRow = null;
+
 async function openLogModal(auditId) {
   const modal = document.getElementById('logModal');
   const body  = document.getElementById('logModalBody');
+  _currentLogRow = null;
   modal.classList.add('open');
   body.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
@@ -194,11 +197,52 @@ async function openLogModal(auditId) {
     try { policyFlags = JSON.parse(mergedRow.policy_flags       || '[]'); } catch {}
     try { policies    = JSON.parse(mergedRow.retrieved_policies || '[]'); } catch {}
 
+    _currentLogRow = mergedRow;
     body.innerHTML = renderAuditLog(mergedRow, policyFlags, policies);
     wireEditActions(auditId, mergedRow, policyFlags, policies);
   } catch (err) {
     body.innerHTML = `<p style="color:var(--danger)">Error: ${err.message}</p>`;
   }
+
+  document.getElementById('btnRegenerateLog').onclick = () => {
+    if (!_currentLogRow) return;
+    const input    = _currentLogRow.raw_input  || '';
+    const role     = _currentLogRow.role       || 'general';
+    const taskType = _currentLogRow.task_type  || 'general';
+
+    closeLogModal();
+    if (typeof navigateTo === 'function') navigateTo('home');
+    if (typeof resetToStep1 === 'function') resetToStep1();
+
+    setTimeout(() => {
+      /* 1. Pre-populate the extracted state so the chat panel mirrors
+            what the normal generate flow would have collected */
+      if (typeof _chatExtracted !== 'undefined') {
+        _chatExtracted.role             = role;
+        _chatExtracted.task_type        = taskType;
+        _chatExtracted.task_description = input;
+      }
+
+      /* 2. Show the same summary bubble the agent shows after collecting info */
+      if (typeof _chatAddMessage === 'function') {
+        _chatAddMessage('agent',
+          'Here\'s what I\'m regenerating based on your previous task:\n' +
+          `• Role: ${typeof capitalize === 'function' ? capitalize(role) : role}\n` +
+          `• Task Type: ${typeof capitalize === 'function' ? capitalize(taskType) : taskType}\n` +
+          `• Task Description: ${input}\n\n` +
+          'Click Generate below to regenerate, or type in the chat to refine.'
+        );
+      }
+
+      /* 3. Show the summary bar tags (Role / Task Type chips) */
+      if (typeof _chatUpdateSummary === 'function') _chatUpdateSummary();
+
+      /* 4. Show the ready banner + enable Generate button */
+      document.getElementById('chatReadyBanner')?.classList.add('visible');
+      const genBtn = document.getElementById('chatGenerateBtn');
+      if (genBtn) genBtn.disabled = false;
+    }, 150);
+  };
 }
 
 function closeLogModal() {
