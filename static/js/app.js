@@ -835,6 +835,7 @@ async function _runGenerate(input, role, taskType) {
     renderResult(data);
     goToStep(3);
     loadSidebarStats();
+    refreshAuditViews();
 
   } catch (err) {
     if (err.name === 'AbortError') return;
@@ -916,6 +917,7 @@ function resetToStep1() {
   currentTool        = '';
   document.querySelectorAll('.star').forEach(s => s.classList.remove('lit'));
   _chatReset();
+  initRecentRuns();
 }
 
 
@@ -1521,6 +1523,16 @@ async function initRecentRuns() {
     block.style.display = '';
   } catch {
     // Silent fail — recent runs are a nice-to-have; absence is fine.
+  }
+}
+
+
+function refreshAuditViews() {
+  if (typeof initRecentRuns === 'function') initRecentRuns();
+
+  const historyPage = document.getElementById('page-history');
+  if (historyPage?.classList.contains('active') && typeof loadHistory === 'function') {
+    loadHistory();
   }
 }
 

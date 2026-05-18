@@ -692,15 +692,15 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
     if period == "week":
         since      = now - timedelta(weeks=1)
         prev_since = since - timedelta(weeks=1)
-        tl_fmt     = "%Y-%m-%d"
+        tl_fmt     = "yyyy-MM-dd"
     elif period == "month":
         since      = now - timedelta(days=30)
         prev_since = since - timedelta(days=30)
-        tl_fmt     = "%Y-%m-%d"
+        tl_fmt     = "yyyy-MM-dd"
     else:  # day (default)
         since      = now - timedelta(days=1)
         prev_since = since - timedelta(days=1)
-        tl_fmt     = "%H"
+        tl_fmt     = "HH"
 
     since_str      = since.isoformat()
     prev_since_str = prev_since.isoformat()
@@ -784,9 +784,9 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
 
     # ── Timeline ─────────────────────────────────────────────────────────────
     tl_rows = conn.execute(
-        f"SELECT strftime('{tl_fmt}', created_at) as bucket, COUNT(*) as count "
+        f"SELECT FORMAT(CAST(created_at AS DATETIME2), '{tl_fmt}') as bucket, COUNT(*) as count "
         f"FROM audit_log WHERE created_at >= ?{role_filter_sql} "
-        f"GROUP BY bucket ORDER BY bucket ASC",
+        f"GROUP BY FORMAT(CAST(created_at AS DATETIME2), '{tl_fmt}') ORDER BY bucket ASC",
         base_args
     ).fetchall()
     timeline = _fill_timeline([(r["bucket"], r["count"]) for r in tl_rows], since, now, period)
