@@ -79,11 +79,11 @@ def init_navigator_tables() -> None:
                 SELECT 1 FROM sys.tables WHERE name = 'NavigatorUsers'
             )
             CREATE TABLE NavigatorUsers (
-                id            INT IDENTITY(1,1) PRIMARY KEY,
-                email         NVARCHAR(255) NOT NULL UNIQUE,
-                name          NVARCHAR(255) DEFAULT '',
-                first_seen_at DATETIME2     DEFAULT GETUTCDATE(),
-                last_seen_at  DATETIME2     DEFAULT GETUTCDATE()
+                id         INT IDENTITY(1,1) PRIMARY KEY,
+                email      NVARCHAR(255) NOT NULL UNIQUE,
+                name       NVARCHAR(255) DEFAULT '',
+                first_seen DATETIME2     DEFAULT GETUTCDATE(),
+                last_seen  DATETIME2     DEFAULT GETUTCDATE()
             );
         """)
 
@@ -133,9 +133,8 @@ def identify_user(email: str) -> dict:
         )
         row = cur.fetchone()
         if row:
-            # Update last_seen_at
             cur.execute(
-                "UPDATE NavigatorUsers SET last_seen_at = ? WHERE LOWER(email) = ?",
+                "UPDATE NavigatorUsers SET last_seen = ? WHERE LOWER(email) = ?",
                 (datetime.now(timezone.utc), email)
             )
             conn.commit()
@@ -145,7 +144,7 @@ def identify_user(email: str) -> dict:
         now = datetime.now(timezone.utc)
         cur.execute(
             """
-            INSERT INTO NavigatorUsers (email, name, first_seen_at, last_seen_at)
+            INSERT INTO NavigatorUsers (email, name, first_seen, last_seen)
             VALUES (?, '', ?, ?)
             """,
             (email, now, now)

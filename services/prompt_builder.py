@@ -463,7 +463,7 @@ OUTPUT: Provide a well-structured, professional response tailored for a {effecti
 def build_corlo_prompt(state: OrchestratorState) -> OrchestratorState:
     conn = get_db()
     row  = conn.execute(
-        "SELECT version FROM prompt_versions ORDER BY created_at DESC LIMIT 1"
+        "SELECT TOP 1 version FROM prompt_versions ORDER BY created_at DESC"
     ).fetchone()
     conn.close()
 

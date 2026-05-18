@@ -31,7 +31,7 @@ async def get_prompt_version(version_id: str):
 @router.post("/api/prompt-versions")
 async def create_prompt_version(req: PromptVersionRequest):
     conn = get_db()
-    last = conn.execute("SELECT version FROM prompt_versions ORDER BY created_at DESC LIMIT 1").fetchone()
+    last = conn.execute("SELECT TOP 1 version FROM prompt_versions ORDER BY created_at DESC").fetchone()
     if last:
         try:
             major, minor = last["version"].split(".")
