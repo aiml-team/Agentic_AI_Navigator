@@ -17,12 +17,18 @@ def get_redis():
     if _redis_checked:
         return _redis_client
     _redis_checked = True
+    url = os.getenv("REDIS_URL", "")
+    if not url:
+        logger.info("REDIS_URL not set — caching disabled.")
+        return None
     try:
         import redis
-        url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-        _redis_client = redis.Redis.from_url(url, decode_responses=True, socket_connect_timeout=2, socket_timeout=2)
+        kwargs = dict(decode_responses=True, socket_connect_timeout=5, socket_timeout=5)
+        if url.startswith("rediss://"):
+            kwargs["ssl_cert_reqs"] = None
+        _redis_client = redis.Redis.from_url(url, **kwargs)
         _redis_client.ping()
-        logger.info("Redis connected: %s", url)
+        logger.info("Redis connected: %s", url.split("@")[-1])
     except Exception as exc:
         logger.warning("Redis unavailable — caching disabled. Reason: %s", exc)
         _redis_client = None

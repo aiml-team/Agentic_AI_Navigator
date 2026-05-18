@@ -82,6 +82,10 @@ def _load_scenario_library_from_bytes(excel_bytes: bytes) -> list:
         title     = _safe_val(row[col_title])     if col_title     else ""
         persona   = _safe_val(row[col_persona])   if col_persona   else ""
         scenario  = _safe_val(row[col_scenario])  if col_scenario  else ""
+        scenario  = scenario.lstrip('"').lstrip("'")
+        _nav_prefix = "Navigator-Ready Task Specification"
+        if scenario.startswith(_nav_prefix):
+            scenario = scenario[len(_nav_prefix):].lstrip('\n').lstrip()
         task_type = _safe_val(row[col_task_type]) if col_task_type else ""
 
         if mega:

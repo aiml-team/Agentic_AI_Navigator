@@ -143,7 +143,8 @@ def init_db():
                policy_blocked INT DEFAULT 0,
                policy_summary NVARCHAR(MAX) DEFAULT '',
                role NVARCHAR(255) DEFAULT 'general',
-               user_email NVARCHAR(255) DEFAULT ''
+               user_email NVARCHAR(255) DEFAULT '',
+               row_num INT IDENTITY(1,1) NOT NULL UNIQUE
            )""",
         """IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='feedback')
            CREATE TABLE feedback (
