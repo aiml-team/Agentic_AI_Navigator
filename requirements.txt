@@ -17,3 +17,4 @@ openpyxl
 tavily-python
 pandas
 azure-storage-blob
+redis==5.2.1

@@ -7,6 +7,7 @@ from schemas import RunRequest
 from services.orchestrator import orchestrator
 from services.database import get_db
 from services.registry import AI_TOOLS_REGISTRY, SYSTEM_VERSION
+from services.cache import invalidate_audit_lists_for_user, set_audit_record
 
 router = APIRouter()
 
@@ -68,7 +69,13 @@ async def run_orchestrator(req: RunRequest):
         ),
     )
     conn.commit()
+
+    new_record = conn.execute("SELECT * FROM audit_log WHERE id = ?", (audit_id,)).fetchone()
     conn.close()
+
+    if new_record:
+        set_audit_record(audit_id, dict(new_record))
+    invalidate_audit_lists_for_user(stored_email)
 
     return {
         "audit_id":          audit_id,

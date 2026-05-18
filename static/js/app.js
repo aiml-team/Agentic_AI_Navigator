@@ -17,6 +17,7 @@ const API = {
   refine:             '/api/refine',
   feedback:           '/api/feedback',
   audit:              '/api/audit',
+  auditById:          (id) => `/api/audit/${encodeURIComponent(id)}`,
   analytics:          '/api/analytics',
   tools:              '/api/tools',
   toolsRegister:      '/api/tools/register',

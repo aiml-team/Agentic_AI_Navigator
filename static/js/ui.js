@@ -179,10 +179,9 @@ async function openLogModal(auditId) {
   body.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
   try {
-    const res  = await fetch(`${API.audit}?limit=200`);
-    const data = await res.json();
-    const row  = data.find(r => r.id === auditId);
-    if (!row) { body.innerHTML = '<p style="color:var(--text2)">Log not found.</p>'; return; }
+    const res = await fetch(API.auditById(auditId));
+    if (!res.ok) { body.innerHTML = '<p style="color:var(--text2)">Log not found.</p>'; return; }
+    const row = await res.json();
 
     // apply local edits if any (frontend-only persistence)
     const localEdits = getLocalAuditEdits(auditId);

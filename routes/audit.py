@@ -3,12 +3,21 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException
 from schemas import AuditUpdateRequest
 from services.database import get_db
+from services.cache import (
+    get_audit_list, set_audit_list,
+    get_audit_record, set_audit_record,
+    invalidate_audit_record, invalidate_audit_lists_for_user,
+)
 
 router = APIRouter()
 
 
 @router.get("/api/audit")
 async def get_audit_log(limit: int = 20, user_email: str = ""):
+    cached = get_audit_list(user_email, limit)
+    if cached is not None:
+        return cached
+
     conn = get_db()
     if user_email.strip():
         rows = conn.execute(
@@ -20,7 +29,30 @@ async def get_audit_log(limit: int = 20, user_email: str = ""):
             "SELECT * FROM audit_log ORDER BY created_at DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (limit,)
         ).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+
+    data = [dict(r) for r in rows]
+    set_audit_list(user_email, limit, data)
+    for record in data:
+        if record.get("id"):
+            set_audit_record(record["id"], record)
+    return data
+
+
+@router.get("/api/audit/{audit_id}")
+async def get_audit_record_by_id(audit_id: str):
+    cached = get_audit_record(audit_id)
+    if cached is not None:
+        return cached
+
+    conn = get_db()
+    row = conn.execute("SELECT * FROM audit_log WHERE id = ?", (audit_id,)).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Audit log not found")
+
+    data = dict(row)
+    set_audit_record(audit_id, data)
+    return data
 
 
 @router.patch("/api/audit/{audit_id}")
@@ -45,7 +77,12 @@ async def update_audit_log(audit_id: str, req: AuditUpdateRequest):
 
     updated = conn.execute("SELECT * FROM audit_log WHERE id = ?", (audit_id,)).fetchone()
     conn.close()
-    return dict(updated)
+
+    data = dict(updated)
+    invalidate_audit_record(audit_id)
+    set_audit_record(audit_id, data)
+    invalidate_audit_lists_for_user(current.get("user_email", ""))
+    return data
 
 
 @router.get("/api/analytics")
