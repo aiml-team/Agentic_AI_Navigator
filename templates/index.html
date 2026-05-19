@@ -56,23 +56,15 @@
       <div style="flex:0 0 396px;max-width:100%;" class="animate-auth-fade-in">
         <div style="background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(15,23,42,0.10),0 8px 28px rgba(15,23,42,0.12);padding:20px;display:flex;flex-direction:column;gap:12px;">
 
-          <form id="authForm" autocomplete="off" style="display:flex;flex-direction:column;gap:12px;">
-            <input id="authEmailInput" type="email" required autocomplete="off"
-                   placeholder="Work email (you@bs.nttdata.com)"
-                   style="width:100%;padding:14px 16px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:17px;color:var(--text);outline:none;box-sizing:border-box;transition:border-color 0.15s,box-shadow 0.15s;"
-                   onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.12)';"
-                   onblur="this.style.borderColor='#cbd5e1';this.style.boxShadow='';"/>
+          <div id="authError" style="display:none;padding:12px 14px;border-radius:6px;background:var(--danger-pale);border:1px solid var(--danger);font-size:14px;color:var(--danger);margin-bottom:4px;"></div>
 
-            <div id="authError" class="hidden"
-                 style="padding:12px 14px;border-radius:6px;background:var(--danger-pale);border:1px solid var(--danger);font-size:14px;color:var(--danger);"></div>
-
-            <button id="authSubmitBtn" type="submit"
-                    style="width:100%;padding:13px 16px;border-radius:6px;border:0;cursor:pointer;background:var(--primary);color:#fff;font-size:20px;font-weight:700;letter-spacing:0.01em;transition:background 0.15s;"
-                    onmouseover="this.style.background='var(--primary-dark)';"
-                    onmouseout="this.style.background='var(--primary)';">
-              Log In
-            </button>
-          </form>
+          <a id="oktaLoginBtn" href="/saml/login"
+             style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:13px 16px;border-radius:6px;border:0;cursor:pointer;background:var(--primary);color:#fff;font-size:18px;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:background 0.15s;box-sizing:border-box;"
+             onmouseover="this.style.background='var(--primary-dark)';"
+             onmouseout="this.style.background='var(--primary)';">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Sign in with Okta
+          </a>
 
           <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/AI_Navigator_User_Manual.pdf?csf=1&web=1&e=QBY0GJ"
              target="_blank" rel="noopener"
@@ -85,7 +77,7 @@
           <div style="height:1px;background:#e2e8f0;margin:8px 0;"></div>
 
           <div style="text-align:center;font-size:13px;color:var(--text2);line-height:1.55;">
-            Access is restricted to <strong style="color:var(--text);">@bs.nttdata.com</strong> work emails.
+            Sign in using your <strong style="color:var(--text);">NTT DATA Okta</strong> account.
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ from routes.scenarios import router as scenarios_router
 from routes.prompt_versions import router as prompt_versions_router
 from routes.refine import router as refine_router
 from routes.auth_routes import router as auth_router
+from routes.saml_routes import router as saml_router
 
 router = APIRouter()
 
@@ -23,3 +24,4 @@ router.include_router(scenarios_router)
 router.include_router(prompt_versions_router)
 router.include_router(refine_router)
 router.include_router(auth_router)
+router.include_router(saml_router)
