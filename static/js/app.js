@@ -1583,7 +1583,7 @@ async function loadHistory() {
       <div class="history-item">
         <div class="history-item-icon"><img src="/static/Images/Navigator.svg" alt="AI Navigator" /></div>
         <div class="history-item-body">
-          <div class="history-item-input" title="${escapeHtml(row.raw_input || '')}"><span style="font-size:10px;font-weight:700;color:var(--primary);background:var(--primary-light,#ede9fe);border-radius:4px;padding:1px 6px;margin-right:6px;letter-spacing:0.3px;">#${row.row_num ?? ''}</span>${escapeHtml(row.raw_input || '—')}</div>
+          <div class="history-item-input" title="${escapeHtml(row.raw_input || '')}">${escapeHtml(row.raw_input || '—')}</div>
           <div class="history-item-meta">
             ${isAdmin && row.user_email ? `<span class="history-email-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:3px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(row.user_email)}</span>` : ''}
             <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:3px;opacity:0.65;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>${capitalize(row.intent || '—')}</span>

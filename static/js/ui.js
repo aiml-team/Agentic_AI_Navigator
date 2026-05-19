@@ -372,7 +372,7 @@ function renderAuditLog(row, policyFlags, policies, editMode = false) {
         </div>
       </div>
 
-      ${viewBlock('Metadata', `Log #${row.row_num ?? '—'}  |  Audit ID: ${row.id}\nTimestamp: ${formatDate(row.created_at)}\nSystem Version: ${row.system_version || '—'}`)}
+      ${viewBlock('Metadata', `Audit ID: ${row.id}\nTimestamp: ${formatDate(row.created_at)}\nSystem Version: ${row.system_version || '—'}`)}
     `;
   }
 
@@ -394,7 +394,7 @@ function renderAuditLog(row, policyFlags, policies, editMode = false) {
       : ''
     }
 
-    ${viewBlock('Metadata', `Log #${row.row_num ?? '—'}  |  Audit ID: ${row.id}\nTimestamp: ${formatDate(row.created_at)}\nSystem Version: ${row.system_version || '—'}`)}
+    ${viewBlock('Metadata', `Audit ID: ${row.id}\nTimestamp: ${formatDate(row.created_at)}\nSystem Version: ${row.system_version || '—'}`)}
   `;
 }
 
