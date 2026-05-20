@@ -12,12 +12,12 @@ async def get_audit_log(limit: int = 20, user_email: str = ""):
     conn = get_db()
     if user_email.strip():
         rows = conn.execute(
-            "SELECT * FROM audit_log WHERE LOWER(user_email) = ? ORDER BY created_at DESC LIMIT ?",
-            (user_email.strip().lower(), limit)
+            f"SELECT TOP {int(limit)} * FROM audit_log WHERE LOWER(user_email) = ? ORDER BY created_at DESC",
+            (user_email.strip().lower(),)
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?", (limit,)
+            f"SELECT TOP {int(limit)} * FROM audit_log ORDER BY created_at DESC"
         ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -54,28 +54,28 @@ async def get_analytics():
     total          = conn.execute("SELECT COUNT(*) as c FROM audit_log").fetchone()["c"]
     intents        = conn.execute("SELECT intent, COUNT(*) as c FROM audit_log GROUP BY intent ORDER BY c DESC").fetchall()
     tools          = conn.execute("SELECT recommended_tool, COUNT(*) as c FROM audit_log GROUP BY recommended_tool ORDER BY c DESC").fetchall()
-    industries     = conn.execute("SELECT industry, COUNT(*) as c FROM audit_log GROUP BY industry ORDER BY c DESC LIMIT 5").fetchall()
-    avg_rating     = conn.execute("SELECT AVG(rating) as r FROM feedback").fetchone()["r"]
+    industries     = conn.execute("SELECT TOP 5 industry, COUNT(*) as c FROM audit_log GROUP BY industry ORDER BY c DESC").fetchall()
+    avg_rating     = conn.execute("SELECT AVG(CAST(rating AS FLOAT)) as r FROM feedback").fetchone()["r"]
     feedback_count = conn.execute("SELECT COUNT(*) as c FROM feedback").fetchone()["c"]
     issue_types    = conn.execute(
         "SELECT issue_type, COUNT(*) as c FROM feedback WHERE issue_type != '' GROUP BY issue_type ORDER BY c DESC"
     ).fetchall()
     low_rated = conn.execute("""
-        SELECT a.intent, a.recommended_tool, f.issue_type, f.comment
+        SELECT TOP 10 a.intent, a.recommended_tool, f.issue_type, f.comment
         FROM feedback f JOIN audit_log a ON f.audit_id = a.id
         WHERE f.rating <= 2
-        ORDER BY f.created_at DESC LIMIT 10
+        ORDER BY f.created_at DESC
     """).fetchall()
     token_trend = conn.execute(
-        "SELECT created_at, token_estimate FROM audit_log ORDER BY created_at DESC LIMIT 10"
+        "SELECT TOP 10 created_at, token_estimate FROM audit_log ORDER BY created_at DESC"
     ).fetchall()
     by_user = conn.execute(
-        "SELECT user_email, COUNT(*) as c FROM audit_log WHERE user_email != '' AND user_email IS NOT NULL "
-        "GROUP BY user_email ORDER BY c DESC LIMIT 20"
+        "SELECT TOP 20 user_email, COUNT(*) as c FROM audit_log WHERE user_email != '' AND user_email IS NOT NULL "
+        "GROUP BY user_email ORDER BY c DESC"
     ).fetchall()
     recent_runs = conn.execute(
-        "SELECT id, created_at, user_email, raw_input, recommended_tool, intent, policy_blocked "
-        "FROM audit_log ORDER BY created_at DESC LIMIT 20"
+        "SELECT TOP 20 id, created_at, user_email, raw_input, recommended_tool, intent, policy_blocked "
+        "FROM audit_log ORDER BY created_at DESC"
     ).fetchall()
     conn.close()
 
@@ -159,20 +159,20 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
         change_pct = round((total - prev_total) / prev_total * 100)
 
     by_role_rows = conn.execute(
-        "SELECT role, COUNT(*) as count "
+        "SELECT TOP 15 role, COUNT(*) as count "
         "FROM audit_log "
         "WHERE created_at >= ? "
-        "  AND role IS NOT NULL AND TRIM(role) != '' "
+        "  AND role IS NOT NULL AND LTRIM(RTRIM(role)) != '' "
         + role_filter_sql +
-        " GROUP BY role ORDER BY count DESC LIMIT 15",
+        " GROUP BY role ORDER BY count DESC",
         base_args
     ).fetchall()
     by_role = [{"role": r["role"].strip().title() if r["role"].strip().lower() == "general" else r["role"].strip(), "count": r["count"]} for r in by_role_rows]
 
     by_intent_rows = conn.execute(
-        f"SELECT intent, COUNT(*) as count FROM audit_log "
+        f"SELECT TOP 10 intent, COUNT(*) as count FROM audit_log "
         f"WHERE created_at >= ? AND (intent IS NOT NULL AND intent != ''){role_filter_sql} "
-        f"GROUP BY intent ORDER BY count DESC LIMIT 10",
+        f"GROUP BY intent ORDER BY count DESC",
         base_args
     ).fetchall()
     total_intent = sum(r["count"] for r in by_intent_rows) or 1
@@ -183,9 +183,9 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
     ]
 
     by_tool_rows = conn.execute(
-        f"SELECT recommended_tool, COUNT(*) as count FROM audit_log "
+        f"SELECT TOP 10 recommended_tool, COUNT(*) as count FROM audit_log "
         f"WHERE created_at >= ? AND (recommended_tool IS NOT NULL AND recommended_tool != ''){role_filter_sql} "
-        f"GROUP BY recommended_tool ORDER BY count DESC LIMIT 10",
+        f"GROUP BY recommended_tool ORDER BY count DESC",
         base_args
     ).fetchall()
     total_tool = sum(r["count"] for r in by_tool_rows) or 1
@@ -201,10 +201,15 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
         base_args
     ).fetchone()["c"]
 
+    tl_fmt_sql = (
+        "FORMAT(TRY_CAST(created_at AS DATETIME2), 'HH')"
+        if period == "day"
+        else "FORMAT(TRY_CAST(created_at AS DATETIME2), 'yyyy-MM-dd')"
+    )
     tl_rows = conn.execute(
-        f"SELECT strftime('{tl_fmt}', created_at) as bucket, COUNT(*) as count "
+        f"SELECT {tl_fmt_sql} as bucket, COUNT(*) as count "
         f"FROM audit_log WHERE created_at >= ?{role_filter_sql} "
-        f"GROUP BY bucket ORDER BY bucket ASC",
+        f"GROUP BY {tl_fmt_sql} ORDER BY bucket ASC",
         base_args
     ).fetchall()
     timeline = _fill_timeline([(r["bucket"], r["count"]) for r in tl_rows], since, now, period)

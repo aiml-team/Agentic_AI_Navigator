@@ -1,9 +1,11 @@
 import json
 import os
+import uuid
 from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from services.database import get_db
 
 router = APIRouter()
 
@@ -38,7 +40,7 @@ async def submit_feedback(
     source:     str  = Form("form"),
     files:      List[UploadFile] = File(default=[]),
 ):
-    feedback_id  = str(__import__("uuid").uuid4())
+    feedback_id  = str(uuid.uuid4())
     created_at   = datetime.utcnow().isoformat()
     folder       = f"feedback/{created_at[:10]}_{feedback_id}"
 
@@ -54,10 +56,11 @@ async def submit_feedback(
         "files":      [],
     }
 
+    uploaded_files = []
+
     try:
         container = _get_blob_container()
 
-        uploaded_files = []
         for f in files:
             if not f.filename:
                 continue
@@ -86,6 +89,28 @@ async def submit_feedback(
         )
     except Exception as e:
         raise HTTPException(500, f"Blob upload failed: {str(e)}")
+
+    try:
+        db = get_db()
+        db.execute(
+            """INSERT INTO feedback (id, audit_id, email, rating, comment, issue_type, created_at, source, files)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (
+                feedback_id,
+                audit_id or "",
+                email or "",
+                rating,
+                comment or "",
+                issue_type or "",
+                created_at,
+                source or "form",
+                json.dumps(uploaded_files),
+            ),
+        )
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[feedback] Azure SQL insert warning: {e}")
 
     return {"status": "ok", "feedback_id": feedback_id}
 

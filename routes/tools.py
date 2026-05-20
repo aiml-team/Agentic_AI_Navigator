@@ -281,8 +281,9 @@ async def get_tool_change_log(page: int = 1, per_page: int = 30, tool_name: str 
     total = conn.execute(f"SELECT COUNT(*) as c {base}", args).fetchone()["c"]
     offset = (page - 1) * per_page
     rows = conn.execute(
-        f"SELECT * {base} ORDER BY created_at DESC LIMIT ? OFFSET ?",
-        args + [per_page, offset],
+        f"SELECT * {base} ORDER BY created_at DESC "
+        f"OFFSET {int(offset)} ROWS FETCH NEXT {int(per_page)} ROWS ONLY",
+        args,
     ).fetchall()
     conn.close()
     return {

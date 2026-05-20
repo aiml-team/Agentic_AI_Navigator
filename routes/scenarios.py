@@ -81,8 +81,9 @@ async def list_scenario_suggestions(
 
     offset = (page - 1) * per_page
     rows = conn.execute(
-        f"SELECT * FROM scenario_suggestions {where_sql} ORDER BY submitted_at DESC LIMIT ? OFFSET ?",
-        params + [per_page, offset],
+        f"SELECT * FROM scenario_suggestions {where_sql} ORDER BY submitted_at DESC "
+        f"OFFSET {int(offset)} ROWS FETCH NEXT {int(per_page)} ROWS ONLY",
+        params,
     ).fetchall()
     conn.close()
 
