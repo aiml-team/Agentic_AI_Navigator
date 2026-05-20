@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Form
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 import auth as _auth
 
 router = APIRouter()
@@ -53,36 +53,4 @@ async def get_users(page: int = 1, per_page: int = 50):
         raise HTTPException(500, str(e))
 
 
-@router.get("/saml/metadata")
-async def saml_metadata():
-    cert = Path("saml/sp.crt").read_text()
-    cert = cert.replace("-----BEGIN CERTIFICATE-----", "") \
-               .replace("-----END CERTIFICATE-----", "") \
-               .replace("\n", "").strip()
 
-    base_url = "https://ai-navigator-ashpbzhbcmgeerbt.northeurope-01.azurewebsites.net/"
-
-    xml = f"""<?xml version="1.0"?>
-<md:EntityDescriptor
-    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
-    xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
-    entityID="{base_url}/saml/metadata">
-  <md:SPSSODescriptor
-      AuthnRequestsSigned="false"
-      WantAssertionsSigned="true"
-      protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-    <md:KeyDescriptor use="signing">
-      <ds:KeyInfo>
-        <ds:X509Data>
-          <ds:X509Certificate>{cert}</ds:X509Certificate>
-        </ds:X509Data>
-      </ds:KeyInfo>
-    </md:KeyDescriptor>
-    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-    <md:AssertionConsumerService
-        Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-        Location="{base_url}/saml/acs"
-        index="1"/>
-  </md:SPSSODescriptor>
-</md:EntityDescriptor>"""
-    return Response(content=xml, media_type="application/xml")

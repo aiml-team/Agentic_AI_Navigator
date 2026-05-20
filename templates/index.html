@@ -4,62 +4,91 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Navigator</title>
-  <link rel="icon" type="image/svg+xml" href="/static/ai_compass_true_ui.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/Images/Navigator.svg"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
-  <!-- ══ CSS FILES ══ -->
-  <link rel="stylesheet" href="/static/css/base.css"/>
-  <link rel="stylesheet" href="/static/css/components.css"/>
-  <link rel="stylesheet" href="/static/css/pages.css"/>
-  <link rel="stylesheet" href="/static/css/file_upload.css"/>
-  <link rel="stylesheet" href="/static/css/analytics.css"/>
-  <link rel="stylesheet" href="/static/css/feedback.css"/>
-  <link rel="stylesheet" href="/static/css/tool_editor.css"/>
-  <link rel="stylesheet" href="/static/css/scenario_library.css"/>
-  <link rel="stylesheet" href="/static/css/admin_scenarios.css"/>
-  <link rel="stylesheet" href="/static/css/auth.css"/>
+  <!-- ══ TAILWIND CSS ══
+       Single bundled stylesheet built by `./.tailwindcss -i tailwind/input.css
+       -o static/css/app.css --minify`. Contains:
+         • Tailwind v4 base + utilities
+         • Theme tokens (@theme)
+         • Legacy components rules (@layer components) so existing class
+           names like .tool-card .menu-link still work alongside utilities
+       Rebuild after editing tailwind/input.css; no CDN, no extra files. -->
+  <link rel="stylesheet" href="/static/css/app.css"/>
 </head>
 <body>
 
 <!-- ══════════════════════════════════════
-     LOGIN SCREEN
+     LOGIN SCREEN — Facebook-style split layout.
+     Inline styles for sizing/grid/gaps to bypass any Tailwind build gaps.
 ══════════════════════════════════════ -->
-<div id="authScreen">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-logo-icon">🧭</div>
-      <div class="auth-logo-text">AI Navigator</div>
+<div id="authScreen" style="display:none;background:#F0F2F5;" class="fixed inset-0 z-[99999] font-sans">
+
+  <div style="max-width:1100px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 24px;">
+
+    <!-- NTT corporate logo top-left -->
+    <div style="padding:24px 0 12px 0;">
+      <img src="/static/Images/Logo-White.png" alt="NTT DATA" style="height:28px;width:auto;display:block;" onerror="this.style.display='none'"/>
     </div>
-    <div class="auth-title">Welcome back</div>
-    <div class="auth-subtitle">Sign in with your <strong>@bs.nttdata.com</strong> work email to access your personalised AI workspace.</div>
-    <div class="auth-divider"></div>
-    <form id="authForm" autocomplete="off">
-      <label class="auth-label" for="authEmailInput">Work Email Address</label>
-      <div class="auth-input-wrap">
-        <span class="auth-input-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-        </span>
-        <input class="auth-input" type="email" id="authEmailInput" placeholder="you@bs.nttdata.com" required autocomplete="off"/>
+
+    <!-- Two-column hero, centred vertically -->
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap;padding:32px 0;">
+
+      <!-- ── LEFT: BRAND ── -->
+      <div style="flex:1 1 420px;min-width:0;max-width:560px;" class="animate-auth-fade-in">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <img src="/static/Images/Navigator.svg" alt=""
+               width="56" height="56"
+               style="width:56px;height:56px;display:block;flex-shrink:0;"/>
+          <div style="font-size:56px;font-weight:800;color:var(--primary);letter-spacing:-0.03em;line-height:1;">
+            AI Navigator
+          </div>
+        </div>
+        <p style="font-size:24px;font-weight:600;line-height:1.3;color:var(--text);letter-spacing:-0.01em;max-width:520px;margin:0;">
+          Find the right AI tool for any task — recommended, approved, ready to use.
+        </p>
       </div>
-      <div class="auth-error" id="authError"></div>
-      <button class="auth-submit-btn" type="submit" id="authSubmitBtn">Sign In →</button>
-    </form>
-    <div class="auth-trust-row">
-      <span class="auth-trust-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Secure access
-      </span>
-      <span class="auth-trust-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Role-based access
-      </span>
-      <span class="auth-trust-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-        Session only
-      </span>
+
+      <!-- ── RIGHT: SIGN-IN CARD ── -->
+      <div style="flex:0 0 396px;max-width:100%;" class="animate-auth-fade-in">
+        <div style="background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(15,23,42,0.10),0 8px 28px rgba(15,23,42,0.12);padding:20px;display:flex;flex-direction:column;gap:12px;">
+
+          <div id="authError" style="display:none;padding:12px 14px;border-radius:6px;background:var(--danger-pale);border:1px solid var(--danger);font-size:14px;color:var(--danger);margin-bottom:4px;"></div>
+
+          <a id="oktaLoginBtn" href="/saml/login"
+             style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:13px 16px;border-radius:6px;border:0;cursor:pointer;background:var(--primary);color:#fff;font-size:18px;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:background 0.15s;box-sizing:border-box;"
+             onmouseover="this.style.background='var(--primary-dark)';"
+             onmouseout="this.style.background='var(--primary)';">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Sign in with Okta
+          </a>
+
+          <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/AI_Navigator_User_Manual.pdf?csf=1&web=1&e=QBY0GJ"
+             target="_blank" rel="noopener"
+             style="display:block;text-align:center;font-size:14px;color:var(--primary);text-decoration:none;margin-top:4px;"
+             onmouseover="this.style.textDecoration='underline';"
+             onmouseout="this.style.textDecoration='none';">
+            Need help signing in?
+          </a>
+
+          <div style="height:1px;background:#e2e8f0;margin:8px 0;"></div>
+
+          <div style="text-align:center;font-size:13px;color:var(--text2);line-height:1.55;">
+            Sign in using your <strong style="color:var(--text);">NTT DATA Okta</strong> account.
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- Footer -->
+    <div style="padding:20px 0;text-align:center;font-size:12px;color:var(--text3);">
+      © NTT DATA · AI Navigator v1.0 · By signing in you agree to your organisation's AI usage policies.
+    </div>
+
   </div>
 </div>
 
@@ -69,24 +98,127 @@
 <div id="appShell" style="display:none;">
 
 <!-- ══════════════════════════════════════
-     HAMBURGER MENU DRAWER
+     HAMBURGER MENU DRAWER  (Tailwind)
+     JS toggles `.open` to slide it in.
 ══════════════════════════════════════ -->
-<div class="menu-drawer-overlay" id="menuDrawerOverlay"></div>
-<div class="menu-drawer" id="menuDrawer">
-  <h3>Version 1.0.0</h3>
-  <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/Release%20Document%20-%20AI%20Navigator%20v1.0.0.pdf?csf=1&web=1&e=VJr3z3" class="menu-link">📄 Release document</a>
-  <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/Useer_manual_AI-Navigator.pdf?csf=1&web=1&e=tcxscn" class="menu-link">📖 User manual</a>
-  <a href="#" class="menu-link fb-open-form-trigger">💬 Feedback Form</a>
-  <button class="menu-link ss-open-trigger" id="drawerSuggestScenario" type="button">📝 Submit Scenario</button>
+<!-- Drawer — mobile-only nav. CSS hides the hamburger > 900px so the
+     drawer effectively only appears on small screens. Admin items inside
+     are wired by drawer button handlers; the desktop admin rail delegates
+     to those same handlers via .click(). -->
+<div id="menuDrawerOverlay" class="menu-drawer-overlay"></div>
+<div id="menuDrawer" class="menu-drawer">
 
-  <div class="drawer-admin-section" id="drawerAdminSection">
-    <div class="drawer-admin-divider"></div>
-    <div class="drawer-admin-label">Admin</div>
-    <button class="menu-link" id="dropAnalytics">📊 Analytics Dashboard</button>
-    <button class="menu-link" id="dropFeedbackView">💬 View Feedback</button>
-    <button class="menu-link" id="dropToolChangeLog">📝 Tools Change Log</button>
-    <button class="menu-link" id="dropPolicyUpload">📋 Upload Policy</button>
-    <button class="menu-link" id="dropScenarios">📝 Scenarios</button>
+  <!-- ─── Primary navigation (mobile) ─── -->
+  <div class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 px-4 mb-2 mt-1">Navigate</div>
+  <button class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1"
+          data-page="home">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    Home
+  </button>
+  <button class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1"
+          data-page="promptlibrary">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+    Scenario Library
+  </button>
+  <button class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1"
+          data-page="tools">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    AI Tools
+  </button>
+  <button class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1"
+          data-page="history">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+    My activity
+  </button>
+
+  <div class="my-3 border-t border-slate-200"></div>
+
+  <!-- ─── Help & actions ─── -->
+  <div class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 px-4 mb-2">Help</div>
+  <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/AI_Navigator_Release_Notes.pdf?csf=1&web=1&e=y7prds"
+     class="menu-link no-underline text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg transition-all duration-200
+            hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1 hover:no-underline">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+    Release document
+  </a>
+  <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/AI_Navigator_User_Manual.pdf?csf=1&web=1&e=5akmBs"
+     class="menu-link no-underline text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg transition-all duration-200
+            hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1 hover:no-underline">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    </svg>
+    User manual
+  </a>
+  <a href="#"
+     class="menu-link fb-open-form-trigger no-underline text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg transition-all duration-200
+            hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1 hover:no-underline">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    Feedback Form
+  </a>
+  <button id="drawerSuggestScenario" type="button"
+          class="menu-link ss-open-trigger bg-transparent border-0 text-left text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+                 hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+      <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>
+    </svg>
+    Suggest a scenario
+  </button>
+
+  <div id="drawerAdminSection" class="drawer-admin-section">
+    <div class="my-3 border-t border-slate-300"></div>
+    <div class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 px-4 mb-2">Admin</div>
+    <button id="dropAnalytics"
+            class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+                   hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      Analytics Dashboard
+    </button>
+    <button id="dropFeedbackView"
+            class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+                   hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+      </svg>
+      View Feedback
+    </button>
+    <button id="dropToolChangeLog"
+            class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+                   hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      Tools Change Log
+    </button>
+    <button id="dropPolicyUpload"
+            class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+                   hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Upload Policy
+    </button>
+    <button id="dropScenarios"
+            class="menu-link bg-transparent border-0 text-left w-full text-[var(--text)] text-[0.95rem] font-semibold flex items-center gap-2.5 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+                   hover:bg-[rgba(37,99,235,0.08)] hover:text-[var(--primary)] hover:translate-x-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75;">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      Scenarios
+    </button>
   </div>
 </div>
 
@@ -96,105 +228,192 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <!-- ══════════════════════════════════════
-     HEADER
+     HEADER (Tailwind)
+       • Brand block left-aligned (NTT logo · divider · compass + AI Navigator)
+       • Profile right-aligned (truncated username + avatar + dropdown)
+       • White background with a single 1px slate-200 bottom border
 ══════════════════════════════════════ -->
-<header>
-  <div class="header-content">
-    <div class="hdr-left">
-      <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-        <span></span><span></span><span></span>
+<header class="fixed top-0 left-0 right-0 z-[100] h-[60px] flex items-center bg-white border-b border-slate-200">
+  <div class="w-full max-w-[1400px] mx-auto px-6 flex items-center justify-between gap-4">
+
+    <!-- LEFT: hamburger (mobile only) · NTT logo · divider · AI Navigator wordmark.
+         Hamburger re-appears at ≤900px so admin items / help / feedback that
+         live in the left rail (desktop only) stay reachable on small screens. -->
+    <div class="flex items-center gap-2.5 min-w-0">
+      <button id="hamburgerBtn" aria-label="Open menu"
+              class="hamburger mobile-hamburger flex-col justify-center gap-[4px] w-9 h-9 bg-transparent border-0 cursor-pointer p-1 flex-shrink-0 rounded-md hover:bg-slate-100 transition-colors">
+        <span class="block h-[2px] w-[20px] bg-slate-700 rounded-sm transition-all duration-300"></span>
+        <span class="block h-[2px] w-[20px] bg-slate-700 rounded-sm transition-all duration-300"></span>
+        <span class="block h-[2px] w-[20px] bg-slate-700 rounded-sm transition-all duration-300"></span>
       </button>
-      <img src="/static/Logo-White.png" alt="Logo" class="hdr-logo" onerror="this.style.display='none'"/>
-    </div>
-    <div class="hdr-center">
-      <div class="hdr-title-wrap">
-        <img src="/static/ai_compass_true_ui.svg" alt="AI Compass" class="hdr-compass-icon"/>
-        <div class="hdr-title">AI Navigator</div>
+      <img src="/static/Images/Logo-White.png" alt="NTT DATA" class="h-8 w-auto flex-shrink-0" onerror="this.style.display='none'"/>
+
+      <div class="h-5 w-px bg-slate-200 flex-shrink-0 mx-1"></div>
+
+      <div class="flex items-center gap-1.5 min-w-0">
+        <img src="/static/Images/Navigator.svg" alt="" class="w-[28px] h-[28px] flex-shrink-0"/>
+        <div class="text-[17px] font-bold text-[var(--primary-dark)] tracking-tight truncate">
+          AI Navigator
+        </div>
       </div>
     </div>
 
-    <div class="hdr-right-col">
-        <span id="authUserBadge"></span>
-        <div class="hdr-menu-wrap" id="hdrMenuWrap">
-            <button class="hdr-toggle-btn" id="hdrToggleBtn" aria-label="Profile menu">
-              <div class="hdr-profile-circle">
-                <svg class="hdr-profile-svg" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-            </button>
-            <div class="hdr-dropdown" id="hdrDropdown">
-              <button class="hdr-drop-item" id="authLogoutBtn">
-                <span>🚪</span> Sign out
-              </button>
+    <!-- RIGHT: profile circle + dropdown. Username + email moved inside
+         the dropdown (modern enterprise convention — Slack/Linear/Notion). -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <div id="hdrMenuWrap" class="relative">
+        <button id="hdrToggleBtn" aria-label="Profile menu"
+                class="flex items-center bg-transparent border-0 p-0 cursor-pointer transition-opacity duration-200 hover:opacity-80">
+          <!-- Avatar — JS fills .hdr-avatar-text with the user's initials. -->
+          <div class="hdr-profile-circle w-[36px] h-[36px] rounded-full bg-[var(--primary-pale)] flex items-center justify-center transition-colors duration-200 ring-1 ring-[var(--blue-200)]">
+            <span class="hdr-avatar-text text-[12px] font-bold text-[var(--primary-dark)] tracking-wider"></span>
+            <svg class="hdr-avatar-fallback w-5 h-5 text-[var(--primary-dark)]" fill="currentColor" viewBox="0 0 24 24" style="display:none;">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+        </button>
+        <div id="hdrDropdown" class="hdr-dropdown" style="min-width:240px;">
+          <!-- USER INFO HEADER — populated by auth.js (initials + name + email) -->
+          <div id="dropUserInfo" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border-soft);">
+            <div id="dropUserAvatar" style="width:36px;height:36px;border-radius:50%;background:var(--primary-pale);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;letter-spacing:0.5px;"></div>
+            <div style="min-width:0;flex:1;">
+              <div id="dropUserName" style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+              <div id="dropUserEmail" style="font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
             </div>
+          </div>
+
+          <!-- USER STUFF — your runs, account-scoped -->
+          <button id="dropMyHistory" type="button" data-page="history"
+                  class="flex items-center gap-2.5 w-full px-4 py-[11px] bg-transparent border-0 text-[var(--text)] text-[13.5px] font-medium cursor-pointer text-left transition-colors duration-150
+                         hover:bg-[var(--primary-pale)] hover:text-[var(--primary-dark)]">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            My activity
+          </button>
+
+          <!-- Divider before help -->
+          <div style="height:1px;background:var(--border-soft);margin:4px 0;"></div>
+
+          <!-- HELP — moved here from the retired hamburger drawer. -->
+          <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/AI_Navigator_Release_Notes.pdf?csf=1&web=1&e=y7prds"
+             target="_blank" rel="noopener"
+             class="flex items-center gap-2.5 w-full px-4 py-[11px] bg-transparent border-0 text-[var(--text)] text-[13.5px] font-medium cursor-pointer text-left transition-colors duration-150 no-underline
+                    hover:bg-[var(--primary-pale)] hover:text-[var(--primary-dark)] hover:no-underline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Release document
+          </a>
+          <a href="https://itellicloud.sharepoint.com/:b:/r/sites/US-saleshub/Shared%20Documents/06-%20Digital%20Innovations%20Internal%20Documents/12-%20Artificial%20Intelligence%20and%20Machine%20Learning%20Projects/2026%20-%20AI%20Navigator/AI%20Navigator%20v1.0.0/AI_Navigator_User_Manual.pdf?csf=1&web=1&e=5akmBs"
+             target="_blank" rel="noopener"
+             class="flex items-center gap-2.5 w-full px-4 py-[11px] bg-transparent border-0 text-[var(--text)] text-[13.5px] font-medium cursor-pointer text-left transition-colors duration-150 no-underline
+                    hover:bg-[var(--primary-pale)] hover:text-[var(--primary-dark)] hover:no-underline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            User manual
+          </a>
+
+          <!-- Divider before sign-out -->
+          <div style="height:1px;background:var(--border-soft);margin:4px 0;"></div>
+
+          <button id="authLogoutBtn"
+                  class="flex items-center gap-2.5 w-full px-4 py-[11px] bg-transparent border-0 text-[var(--text)] text-[13.5px] font-medium cursor-pointer text-left transition-colors duration-150
+                         hover:bg-[var(--primary-pale)] hover:text-[var(--primary-dark)]">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign out
+          </button>
         </div>
+      </div>
     </div>
   </div>
 </header>
 
 <!-- ══════════════════════════════════════
-     TAB NAVIGATION
+     TAB NAVIGATION  (Tailwind)
+     `nav-tab` class kept for JS (active toggle); utility classes do the styling.
 ══════════════════════════════════════ -->
-<nav class="tab-navigation">
-  <div class="tab-nav-inner">
-    <button class="nav-tab active" data-page="home">
+<nav class="fixed top-[60px] left-0 right-0 z-[99] bg-white border-b-2 border-slate-300 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+  <div class="max-w-[1400px] mx-auto px-8 flex w-full">
+    <button data-page="home"
+            class="nav-tab active flex items-center justify-center gap-3 py-3 -mb-0.5 bg-transparent border-0 border-b-[3px] border-transparent text-base font-semibold text-[var(--text2)] cursor-pointer transition-all duration-200 whitespace-nowrap flex-1
+                   hover:text-[var(--primary)] hover:bg-[rgba(37,99,235,0.05)]
+                   [&.active]:text-[var(--primary-dark)] [&.active]:!border-b-[var(--primary)]
+                   [&_svg]:flex-shrink-0 [&_svg]:opacity-70 [&_svg]:transition-all [&_svg]:duration-200
+                   hover:[&_svg]:opacity-100 [&.active_svg]:opacity-100">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
       Home
     </button>
-    <button class="nav-tab" data-page="promptlibrary">
+    <button data-page="promptlibrary"
+            class="nav-tab flex items-center justify-center gap-3 py-3 -mb-0.5 bg-transparent border-0 border-b-[3px] border-transparent text-base font-semibold text-[var(--text2)] cursor-pointer transition-all duration-200 whitespace-nowrap flex-1
+                   hover:text-[var(--primary)] hover:bg-[rgba(37,99,235,0.05)]
+                   [&.active]:text-[var(--primary-dark)] [&.active]:!border-b-[var(--primary)]
+                   [&_svg]:flex-shrink-0 [&_svg]:opacity-70 [&_svg]:transition-all [&_svg]:duration-200
+                   hover:[&_svg]:opacity-100 [&.active_svg]:opacity-100">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
       </svg>
       Scenario Library
     </button>
-    <button class="nav-tab" data-page="tools">
+    <button data-page="tools"
+            class="nav-tab flex items-center justify-center gap-3 py-3 -mb-0.5 bg-transparent border-0 border-b-[3px] border-transparent text-base font-semibold text-[var(--text2)] cursor-pointer transition-all duration-200 whitespace-nowrap flex-1
+                   hover:text-[var(--primary)] hover:bg-[rgba(37,99,235,0.05)]
+                   [&.active]:text-[var(--primary-dark)] [&.active]:!border-b-[var(--primary)]
+                   [&_svg]:flex-shrink-0 [&_svg]:opacity-70 [&_svg]:transition-all [&_svg]:duration-200
+                   hover:[&_svg]:opacity-100 [&.active_svg]:opacity-100">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
         <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
       </svg>
       AI Tools
     </button>
-    <button class="nav-tab" data-page="history">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-      </svg>
-      History
-    </button>
+    <!-- History moved to profile dropdown ("My activity"). Recent runs
+         on the Home empty state covers the daily peek; the full History
+         page is for occasional deep dives, which doesn't justify a top tab. -->
   </div>
 </nav>
 
 <!-- ══════════════════════════════════════
-     SIDEBAR
+     ADMIN LEFT RAIL  (admin only — hidden by auth.js for regular users)
+     Persistent nav for admin functions that previously lived only in the
+     hamburger drawer. Each button delegates to the existing drawer button
+     handler via .click() so all wiring is reused, no duplicate logic.
 ══════════════════════════════════════ -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-inner">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Navigation</div>
-      <button class="sidebar-item" data-page="analytics">📊 Analytics</button>
-      <button class="sidebar-item" data-page="admin-scenarios">📝 Scenarios</button>
-      <a href="#" class="menu-link">📄 Release document</a>
-      <a href="#" class="menu-link">📖 User manual</a>
-      <a href="#" class="menu-link fb-open-form-trigger">💬 Feedback Form</a>
-      <a href="#" class="menu-link" id="sidebarFeedbackView">📋 View Feedbacks</a>
-    </div>
-    <!-- <div class="sidebar-section">
-      <div class="sidebar-label">Quick Stats</div>
-      <div class="sidebar-stat">
-        <span class="sidebar-stat-label">Total Runs</span>
-        <span class="sidebar-stat-val" id="sbTotalRuns">—</span>
-      </div>
-      <div class="sidebar-stat">
-        <span class="sidebar-stat-label">Avg Rating</span>
-        <span class="sidebar-stat-val" id="sbAvgRating">—</span>
-      </div>
-      <div class="sidebar-stat">
-        <span class="sidebar-stat-label">Policies</span>
-        <span class="sidebar-stat-val" id="sbPolicies">—</span>
-      </div> -->
-    </div>
+<aside id="adminRail" aria-label="Admin navigation"
+       class="fixed left-0 z-[80] bg-white border-r border-slate-200 overflow-y-auto"
+       style="top:112px;bottom:0;width:220px;">
+      <button id="adminRailCollapseBtn" class="admin-rail-toggle-btn" type="button" title="Hide admin menu">
+        ‹
+      </button>
+  <div id="adminRailContent" class="admin-rail-content px-3 py-4">
+    <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 px-3 mb-3">Admin</div>
+    <nav class="flex flex-col gap-0.5">
+      <button id="railAnalytics" class="rail-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </button>
+      <button id="railScenarios" class="rail-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Scenario Review
+      </button>
+      <button id="railPolicies" class="rail-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Policy
+      </button>
+      <button id="railToolsLog" class="rail-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Tools Change Log
+      </button>
+      <button id="railFeedback" class="rail-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        Feedback Inbox
+      </button>
+    </nav>
   </div>
 </aside>
 
@@ -207,7 +426,9 @@
   <section class="page active" id="page-home">
     <div class="home-outer" id="homeOuter">
 
-      <!-- ══ CHAT PANEL (left, resizable) ══ -->
+      <!-- ══ CHAT PANEL — restored to legacy markup so .chat-panel CSS,
+           .chat-panel-inner flex, drag-handle resize, and all JS hooks
+           work as they did originally. -->
       <div class="chat-panel" id="chatPanel">
         <div class="chat-panel-inner">
 
@@ -216,18 +437,18 @@
             <div class="chat-panel-header-text">
               <div class="chat-panel-title">
                 <div class="chat-status-dot"></div>
-                AI Task Assistant
+                AI task assistant
               </div>
               <div class="chat-panel-subtitle">Tell me what you need — I'll guide you</div>
             </div>
             <div class="chat-panel-header-actions">
-              <button class="chat-reset-btn" id="chatResetBtn" title="Start a new chat and clear everything">New Task</button>
+              <button class="chat-reset-btn" id="chatResetBtn" title="Start a new chat and clear everything">New task</button>
             </div>
           </div>
 
           <!-- Summary bar (shows extracted role / task_type) -->
           <div class="chat-summary-bar" id="chatSummaryBar">
-            <div class="chat-summary-label">Gathered so far</div>
+            <div class="chat-summary-label">Detected</div>
             <div class="chat-summary-tags" id="chatSummaryTags"></div>
           </div>
 
@@ -244,7 +465,7 @@
           <!-- Ready banner -->
           <div class="chat-ready-banner" id="chatReadyBanner">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Task understood! Click <strong style="margin:0 3px;">Generate Response</strong> below to proceed.
+            Task understood! Click <strong style="margin:0 3px;">Generate</strong> below to proceed.
           </div>
 
           <!-- Input + actions -->
@@ -263,11 +484,10 @@
             </div>
             <div class="chat-actions">
               <button class="chat-action-btn" id="chatSkipAllBtn" title="Skip remaining questions and proceed with what you've shared">
-                Skip All &amp; Proceed
+                Skip questions
               </button>
               <button class="chat-action-btn primary-action" id="chatGenerateBtn" disabled title="Generate response using the gathered task info">
-                <!-- <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> -->
-                Generate Response
+                Generate
               </button>
             </div>
           </div>
@@ -280,52 +500,64 @@
         <button class="chat-toggle-btn" id="chatToggleBtn" title="Toggle chat width">»</button>
       </div>
 
-      <!-- Hidden inputs kept for JS compatibility — not shown to user -->
-      <input type="hidden" id="selRole" />
-      <input type="hidden" id="selTaskType" />
-      <input type="hidden" id="userInput" />
-      <span style="display:none" id="charCount">0</span>
+      <!-- (Removed legacy hidden inputs #selRole / #selTaskType / #userInput / #charCount.
+           They were vestigial from the pre-chat form UX. The chat flow now passes
+           role/task_type/task_description directly to _runGenerate(). All JS reads
+           use optional chaining so the missing elements safely no-op.) -->
 
       <!-- ══ RIGHT SIDE: results only ══ -->
       <div class="home-right" id="homeRight">
 
       <!-- RIGHT COLUMN: Steps -->
       <div>
-        <div class="step-indicators">
-          <div class="step-ind active" id="step-ind-1"><div class="step-num">1</div> Describe</div>
-          <div class="step-ind" id="step-ind-2"><div class="step-num">2</div> Classify</div>
-          <div class="step-ind" id="step-ind-3"><div class="step-num">3</div> Result</div>
-        </div>
+        <!-- Step indicator removed — the current state is already obvious
+             from context (empty card vs spinner vs result card), and the
+             Step 2 panel self-narrates ("Generating…"). JS in ui.js still
+             tries to toggle .active on #step-ind-{1,2,3} but those IDs no
+             longer exist and the calls safely no-op via `if (!ind) continue`. -->
 
-        <!-- STEP 1: Waiting -->
+        <!-- STEP 1: Waiting / Empty state — also surfaces recent runs as
+             context. The recent-runs block is JS-populated on Home init;
+             when there's no history, only the "Ready to generate" copy shows.
+             Step 1 becomes inactive as soon as the user starts a task, so
+             this block never crowds an active workflow. -->
         <div class="step-panel active" id="step-1">
           <div class="card">
             <div class="card-bd">
-              <div class="empty-state" style="padding:60px 20px">
+              <div class="empty-state" style="padding:48px 20px 28px">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 <p style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:6px">Ready to generate</p>
-                <p>Chat with the assistant on the left — describe your task and click <strong>Generate Response</strong>.</p>
+                <p>Chat with the assistant on the left — describe your task and click <strong>Generate</strong>.</p>
+              </div>
+
+              <!-- Populated by initRecentRuns() in app.js. Hidden until ≥1 row arrives. -->
+              <div id="homeRecentBlock" style="display:none;border-top:1px solid var(--border-soft);padding:18px 20px 6px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                  <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;">
+                    Recent runs
+                  </div>
+                  <button type="button" id="homeRecentMore"
+                          style="font-size:11.5px;font-weight:600;color:var(--primary);background:transparent;border:0;cursor:pointer;padding:0;">
+                    See all →
+                  </button>
+                </div>
+                <div id="homeRecentList" style="display:flex;flex-direction:column;gap:6px;"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- STEP 2: Processing -->
+        <!-- STEP 2: Processing — minimal honest spinner -->
         <div class="step-panel" id="step-2">
           <div class="card">
             <div class="card-bd">
-              <div class="processing-wrap">
+              <div class="flex flex-col items-center justify-center gap-4 py-16">
                 <div class="proc-icon">
                   <div class="proc-ring"></div>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
-                <div class="proc-steps" id="processingSteps">
-                  <div class="proc-step" id="proc-1"><div class="proc-dot"></div><span>Classifying intent &amp; industry…</span></div>
-                  <div class="proc-step" id="proc-2"><div class="proc-dot"></div><span>Matching role &amp; task context…</span></div>
-                  <div class="proc-step" id="proc-3"><div class="proc-dot"></div><span>Recommending best AI tool…</span></div>
-                  <div class="proc-step" id="proc-4"><div class="proc-dot"></div><span>Retrieving company policies…</span></div>
-                  <div class="proc-step" id="proc-5"><div class="proc-dot"></div><span>Building optimised prompt…</span></div>
-                </div>
+                <div class="text-[14px] font-semibold text-[var(--text)]">Generating your recommendation…</div>
+                <div class="text-[12px] text-[var(--text2)] max-w-xs text-center">This usually takes a few seconds.</div>
               </div>
             </div>
           </div>
@@ -345,24 +577,32 @@
               <div id="policyFlagsBox"></div>
               <div id="alternativesBox"></div>
 
-              <!-- Confidentiality notice — shown only when task is NOT blocked -->
-              <div id="confidentialityNotice" style="display:none;align-items:flex-start;gap:10px;
-                padding:11px 14px;border-radius:10px;margin-bottom:14px;
-                background:#FFF8E6;border:1.5px solid #FCD34D;">
-                <span style="font-size:17px;flex-shrink:0;margin-top:1px;">🔒</span>
-                <div style="font-size:12.5px;color:#78350F;line-height:1.55;">
-                  <strong style="display:block;margin-bottom:2px;font-size:13px;color:#92400E;">
-                    Important Reminder — Handle with Care
-                  </strong>
-                  Do not enter confidential, personal, or commercially sensitive company data into AI tools.
-                  Always use only <strong>approved tools</strong> from your organisation's registry, and
-                  review all AI-generated output before sharing externally.
+              <div style="
+                display:flex;
+                align-items:flex-start;
+                gap:10px;
+                padding:12px 14px;
+                border-radius:10px;
+                margin-bottom:14px;
+                background:#FFFBEB;
+                border:1px solid #FDE68A;
+              ">
+                
+                <span style="font-size:16px;">🔒</span>
+
+                <div style="font-size:12.5px; color:#78350F; line-height:1.5;">
+                  <strong>Important Reminder — Handle with Care</strong><br>
+                  Do not enter confidential, personal, or commercially sensitive company data into AI tools unless explicitly allowed. Use only approved tools from the NDBS registry, and review all AI-generated output before sharing externally.
                 </div>
+
               </div>
+
+              
 
               <div class="output-tabs">
                 <button class="output-tab active" data-out="prompt">📝 Prompt</button>
-                <button class="output-tab" data-out="policies">🛡️ Policies Applied</button>
+                <!-- Policies Applied tab visible to all users -->
+                <button class="output-tab" data-out="policies" id="outputTabPolicies">🛡️ Policies Applied</button>
               </div>
 
               <div class="output-panel active" id="out-prompt">
@@ -371,7 +611,7 @@
               <div id="promptToolbar" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
                 <button class="btn btn-secondary btn-sm" id="btnEditPrompt">&#9998; Edit</button>
                 <button class="btn btn-secondary btn-sm" id="btnCopyPrompt">&#128203; Copy</button>
-                <button class="btn btn-secondary btn-sm" id="btnSavePrompt">&#9733; Save to Favorites</button>
+                <button class="btn btn-secondary btn-sm" id="btnSavePrompt">&#9733; Save to Favourites</button>
               </div>
 
               <div class="output-content code-block" id="resultPrompt"></div>
@@ -394,28 +634,25 @@
                 <div class="refinement-actions">
                   <button class="btn btn-primary btn-sm" id="btnRefine">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    Revise Prompt
+                    Revise
                   </button>
                   <span id="refineSpinner" style="display:none" class="char-count">Revising…</span>
                 </div>
               </div>
 
-              <!-- Feedback — CORLO Prompt tab only -->
-              <div class="feedback-row">
-                <span class="feedback-label">Rate this result:</span>
-                <div class="stars" id="feedbackStars">
+              <!-- Feedback footer — visually demoted with a divider, smaller stars,
+                   gentler copy. Sits clearly below the prompt + refinement area
+                   so it doesn't compete for attention with the actual prompt. -->
+              <div class="feedback-row mt-6 pt-4 border-t border-slate-200 opacity-90 hover:opacity-100 transition-opacity">
+                <span class="feedback-label text-[12px] text-[var(--text2)] font-medium">Was this helpful?</span>
+                <div class="stars" id="feedbackStars" style="font-size:16px;">
                   <button class="star" data-rating="1">★</button>
                   <button class="star" data-rating="2">★</button>
                   <button class="star" data-rating="3">★</button>
                   <button class="star" data-rating="4">★</button>
                   <button class="star" data-rating="5">★</button>
                 </div>
-                <div class="feedback-ml">
-                  <button class="btn btn-ghost btn-sm" id="btnCopyOutput">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                    Copy
-                  </button>
-                </div>
+
               </div>
             </div>
 
@@ -436,7 +673,7 @@
     <div class="page-scroll-body">
     <div class="page-header">
       <div>
-        <h2 class="page-title" id="historyPageTitle">Run History</h2>
+        <h2 class="page-title" id="historyPageTitle">Recent activity</h2>
         <p class="page-subtitle" id="historyPageSubtitle">Your previous orchestration runs with full audit logs.</p>
       </div>
       <button class="btn btn-secondary" id="btnRefreshHistory">
@@ -461,31 +698,25 @@
       <div class="tools-top-bar">
         <div class="tools-header">
           <div>
-            <h2 class="tools-title">AI Tools Registry</h2>
+            <h2 class="tools-title">AI tools registry</h2>
             <p class="tools-subtitle">All available enterprise AI tools and their capabilities.</p>
           </div>
           <div class="tools-header-actions">
             <input type="search" id="toolsSearch" class="tools-search" placeholder="Search tools…" aria-label="Search tools">
             <button class="tools-register-btn" id="btnRegisterTool">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Register Tool
+              Register tool
             </button>
           </div>
         </div>
 
-        <!-- Toolbar row: view toggle left, category filter right -->
-        <div class="tools-toolbar-row">
-          <div class="tools-view-toggle">
-            <button class="tools-view-btn active" id="btnTileView" title="Tile view">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-              Grid
-            </button>
-            <button class="tools-view-btn" id="btnRowView" title="List view">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              List
-            </button>
-          </div>
+        <!-- Toolbar row: category filter on the right (grid is the only view) -->
+        <div class="tools-toolbar-row" style="justify-content:flex-end;">
           <div class="tools-toolbar-right">
+            <!-- Mobile-only: role dropdown (replaces the sidebar role pills on phones). -->
+            <select id="toolsRoleSelectMobile" class="tools-mobile-select" aria-label="Role">
+              <option value="all">All tools</option>
+            </select>
             <label class="tools-filter-label" for="toolsCategoryFilter">Filter by Category:</label>
             <select id="toolsCategoryFilter" class="tools-cat-select">
               <option value="">All Categories</option>
@@ -504,7 +735,7 @@
               <div class="tools-side-label">Navigate</div>
               <div id="toolsNavAll">
                 <div class="tools-nav-item active" data-role="all">
-                  <span class="tools-nav-dot" style="background:#3498db"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">All Tools</span>
                   <span class="tools-nav-count" id="toolsCountBadge">0</span>
                 </div>
@@ -514,42 +745,42 @@
               <div class="tools-side-label">What are you trying to do?</div>
               <div id="toolsNavRoles">
                 <div class="tools-nav-item" data-role="sales">
-                  <span class="tools-nav-dot" style="background:#8e44ad"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Sales</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="consulting">
-                  <span class="tools-nav-dot" style="background:#3498db"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Consulting</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="hr">
-                  <span class="tools-nav-dot" style="background:#27ae60"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Human Resource</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="finance">
-                  <span class="tools-nav-dot" style="background:#e67e22"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Finance</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="marketing">
-                  <span class="tools-nav-dot" style="background:#e74c3c"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Marketing</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="ams">
-                  <span class="tools-nav-dot" style="background:#16a085"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">AMS</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="developer">
-                  <span class="tools-nav-dot" style="background:#2980b9"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Developer</span>
                   <span class="tools-nav-count"></span>
                 </div>
                 <div class="tools-nav-item" data-role="operations">
-                  <span class="tools-nav-dot" style="background:#7f8c8d"></span>
+                  <span class="tools-nav-dot"></span>
                   <span class="tools-nav-label">Operations</span>
                   <span class="tools-nav-count"></span>
                 </div>
@@ -627,9 +858,30 @@
 
       <div class="page-header">
         <div>
-          <h2 class="page-title">Scenarios Admin</h2>
-          <p class="page-subtitle">Review user-submitted scenario suggestions and manage the scenario log.</p>
+          <div class="title-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+
+            <h2 class="page-title">Scenarios Admin</h2>
+          </div>
+
+          <p class="page-subtitle">
+            Review user-submitted scenario suggestions and manage the scenario log.
+          </p>
         </div>
+
+        <style>
+          .title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* space between icon and text */
+          }
+
+          .title-row svg {
+            color: var(--text2); /* matches your theme */
+          }
+        </style>
+
+
         <button class="btn btn-secondary" id="btnRefreshAdminScenarios">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
           Refresh
@@ -709,9 +961,20 @@
           </div>
           <div class="sl-header-actions">
             <input type="search" id="slSearch" class="sl-search" placeholder="Search scenarios, roles, prompts…" aria-label="Search scenarios">
+            <!-- Admin: "Add scenario" — same button as before -->
             <button class="sl-upload-btn" id="slRegisterScenarioBtn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Register Scenario
+              Add scenario
+            </button>
+            <!-- User: "Suggest a scenario" — moved from the retired drawer.
+                 Visible to non-admins only (auth.js hides .ss-open-trigger
+                 sibling already wires the modal handler). -->
+            <button class="ss-open-trigger sl-upload-btn" id="slSuggestScenarioBtn"
+                    style="background:transparent;color:var(--primary-dark);border:1.5px solid var(--blue-200);"
+                    onmouseover="this.style.background='var(--primary-pale)';"
+                    onmouseout="this.style.background='transparent';">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+              Suggest a scenario
             </button>
           </div>
         </div>
@@ -720,9 +983,14 @@
         <div class="sl-subtab-bar">
           <div class="sl-subtab-tabs">
             <button class="sl-subtab-btn active" data-sltab="scenarios">Scenarios</button>
-            <button class="sl-subtab-btn" data-sltab="favorites">Favorites</button>
+            <button class="sl-subtab-btn" data-sltab="favorites" id="slFavoritesTab">Favorites</button>
           </div>
           <div class="sl-subtab-right">
+            <!-- Mobile-only: mega-group dropdown (replaces the sidebar pill row on phones).
+                 JS in scenario_library.js populates options and wires the change handler. -->
+            <select id="slMegaSelectMobile" class="sl-mobile-select" aria-label="Mega-group">
+              <option value="all">All scenarios</option>
+            </select>
             <label class="sl-role-label" for="slRoleFilter">Filter by Role:</label>
             <select id="slRoleFilter" class="sl-role-select">
               <option value="">All Roles</option>
@@ -748,16 +1016,18 @@
                 <div id="slMegaNav">
                   <!-- populated by JS -->
                   <div class="sl-nav-item active" data-mega="all">
-                    <span class="sl-nav-dot" style="background:#3498db"></span>
+                    <span class="sl-nav-dot" style="background:#3B82F6"></span>
                     <span class="sl-nav-label">All Scenarios</span>
                     <span class="sl-nav-count" id="slCountBadge">0</span>
                   </div>
                 </div>
               </div>
-              <div class="sl-side-section">
+              <div class="sl-side-section" id="slMegaNavSection" style="display:none;">
                 <div class="sl-side-label">What are you trying to do?</div>
                 <div id="slMegaNavGroups">
-                  <!-- mega-group items populated by JS below the "All" item -->
+                  <!-- Populated by JS. Section is hidden via display:none until
+                       at least one mega-group exists, so the empty heading
+                       doesn't float over a void. -->
                 </div>
               </div>
             </nav>
@@ -787,7 +1057,7 @@
           <div class="sl-fav-grid" id="slFavGrid"></div>
           <div id="slFavEmpty" class="sl-empty hidden">
             <div class="sl-empty-icon">⭐</div>
-            <h3>No favorites yet</h3>
+            <h3>No favourites yet</h3>
             <p>Click <strong>☆ Save</strong> on any scenario card to add it here.</p>
           </div>
         </div>
@@ -798,14 +1068,39 @@
 
 </main>
 
+<!-- ══════════════════════════════════════
+     FLOATING FEEDBACK PILL  (replaces drawer Feedback Form)
+     Persistent bottom-right entry point. Uses .fb-open-form-trigger
+     so the existing feedback.js handler binds automatically.
+══════════════════════════════════════ -->
+<button type="button" id="feedbackFab"
+        class="fb-open-form-trigger fixed bottom-5 right-5 z-[90] flex items-center gap-2 px-4 py-2.5 rounded-full
+               bg-white border border-slate-300 shadow-[0_4px_14px_rgba(15,23,42,0.10)]
+               text-[13px] font-semibold text-[var(--text)] cursor-pointer
+               transition-all duration-150
+               hover:-translate-y-0.5 hover:border-[var(--primary)] hover:text-[var(--primary)]
+               hover:shadow-[0_6px_20px_rgba(37,99,235,0.18)]"
+        title="Share feedback">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+  Feedback
+</button>
+
 <!-- LOG MODAL -->
 <div class="modal-overlay" id="logModal">
   <div class="modal">
     <div class="modal-header">
-      <h3 class="modal-title">Run Log</h3>
-      <button class="modal-close" id="btnCloseModal">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <h3 class="modal-title">Task details</h3>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-primary btn-sm" id="btnRegenerateLog" style="display:flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Regenerate
+        </button>
+        <button class="modal-close" id="btnCloseModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
     </div>
     <div class="modal-body" id="logModalBody"></div>
   </div>
@@ -850,9 +1145,61 @@
 <div class="fu-overlay" id="puOverlay"></div>
 <div class="fu-modal" id="puModal">
   <div class="fu-modal-header">
-    <span>📋 Upload Policy Document</span>
-    <button class="fu-close-btn" id="puCloseBtn">✕</button>
-  </div>
+  <span class="header-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Upload Policy Document
+  </span>
+
+  <button class="fu-close-btn" id="puCloseBtn">✕</button>
+</div>
+
+<style>
+  .fu-modal-header {
+    display: flex;
+    justify-content: space-between; /* title left, button right */
+    align-items: center;
+  }
+
+  .header-title {
+    display: inline-flex;   /* keeps icon + text in one line */
+    align-items: center;    /* vertical alignment */
+    gap: 6px;               /* space between icon & text */
+  }
+
+  .fu-close-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+  }
+</style><style>
+  .fu-modal-header {
+    display: flex;
+    justify-content: space-between; /* title left, button right */
+    align-items: center;
+  }
+
+  .header-title {
+    display: inline-flex;   /* keeps icon + text in one line */
+    align-items: center;    /* vertical alignment */
+    gap: 6px;               /* space between icon & text */
+  }
+
+  .fu-close-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+  }
+</style>
+
+
   <div class="fu-modal-body">
     <div class="fu-drop-zone" id="puDropZone">
       <div class="fu-drop-icon">📄</div>
@@ -889,9 +1236,11 @@
     <!-- Header -->
     <div class="te-header">
       <div class="te-header-left">
-        <div style="font-size:22px;">📚</div>
+        <div class="te-header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
         <div>
-          <div class="te-header-name" id="registerScenarioTitle">Register New Scenario</div>
+          <div class="te-header-name" id="registerScenarioTitle">Add scenario</div>
           <div class="te-header-cat">Add a new scenario to the Scenario Library</div>
         </div>
       </div>
@@ -902,8 +1251,12 @@
 
     <!-- Tabs -->
     <div class="te-tabs">
-      <button class="te-tab active" data-rstab="manual">✏️ Manual Input</button>
-      <button class="te-tab"        data-rstab="fileupload">📂 File Upload</button>
+      <button class="te-tab active" data-rstab="manual">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Manual Input
+      </button>
+      <button class="te-tab" data-rstab="fileupload">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>File Upload
+      </button>
     </div>
 
     <!-- Body -->
@@ -914,7 +1267,7 @@
         <div class="te-edit-body" style="padding:20px;">
 
           <div class="te-edit-note">
-            ✏️ <strong>Manual entry</strong> — fill in the fields below and click Save Scenario.
+            ✏️ <strong>Manual entry</strong> — fill in the fields below and click Save.
           </div>
 
           <div class="te-form-grid">
@@ -1005,7 +1358,7 @@
       <div class="te-footer-right" id="rsFooterRight">
         <button class="te-btn te-btn-primary" id="btnSaveRegisterScenario">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save Scenario
+          Save
         </button>
       </div>
     </div>
@@ -1019,9 +1372,11 @@
 
     <div class="te-header">
       <div class="te-header-left">
-        <div style="font-size:22px;">📝</div>
+        <div class="te-header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </div>
         <div>
-          <div class="te-header-name" id="suggestScenarioTitle">Submit Scenario</div>
+          <div class="te-header-name" id="suggestScenarioTitle">Suggest a scenario</div>
           <div class="te-header-cat">Submit your idea — an admin will review before adding to the library</div>
         </div>
       </div>
@@ -1035,7 +1390,7 @@
         <div class="te-edit-body" style="padding:20px;">
 
           <div class="te-edit-note">
-            ✏️ <strong>Manual entry</strong> — fill in the fields below and click Submit Scenario.
+            ✏️ <strong>Manual entry</strong> — fill in the fields below and click Suggest a scenario.
           </div>
 
           <div class="te-form-grid">
@@ -1093,7 +1448,7 @@
       <div class="te-footer-right">
         <button class="te-btn te-btn-primary" id="btnSubmitSuggestScenario">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Submit Scenario
+          Suggest a scenario
         </button>
       </div>
     </div>
@@ -1121,33 +1476,13 @@
       <div class="row2" style="margin-bottom:10px;">
         <div>
           <label class="field-label" for="scenarioRole">Role</label>
-          <input type="text" id="scenarioRole" list="scenarioRoleList" placeholder="Select or type role..." autocomplete="off" />
-          <datalist id="scenarioRoleList">
-            <option value="Consultant / Manager"></option>
-            <option value="Executive / Director"></option>
-            <option value="Developer / Technical"></option>
-            <option value="Business Analyst"></option>
-            <option value="Sales / BD"></option>
-            <option value="Marketing / Comms"></option>
-            <option value="HR / People Ops"></option>
-            <option value="Finance / Accounting"></option>
-          </datalist>
+          <select id="scenarioRole" style="width:100%;padding:9px 11px;font-size:13px;color:var(--text);background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;cursor:pointer;transition:border-color .15s,box-shadow .15s;" onfocus="this.style.borderColor='var(--border-focus)';this.style.boxShadow='0 0 0 3px #2563eb1f';" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='';">
+            <option value="">— Select a role —</option>
+          </select>
         </div>
         <div>
           <label class="field-label" for="scenarioTaskType">Task Type</label>
-          <input type="text" id="scenarioTaskType" list="scenarioTaskTypeList" placeholder="Select or type task type..." autocomplete="off" />
-          <datalist id="scenarioTaskTypeList">
-            <option value="Research &amp; Analysis"></option>
-            <option value="Writing &amp; Docs"></option>
-            <option value="Strategy &amp; Planning"></option>
-            <option value="Data Analysis"></option>
-            <option value="Code &amp; Dev"></option>
-            <option value="Creative Content"></option>
-            <option value="Communication"></option>
-            <option value="Learning &amp; Training"></option>
-            <option value="Process Automation"></option>
-            <option value="Decision Support"></option>
-          </datalist>
+          <div id="scenarioTaskType" style="width:100%;padding:9px 11px;font-size:13px;color:var(--text);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);min-height:38px;display:flex;align-items:center;">—</div>
         </div>
       </div>
 
@@ -1162,7 +1497,7 @@
     <div class="modal-footer" style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
       <button class="btn btn-secondary" id="btnCancelScenarioGen">Cancel</button>
       <button class="btn btn-primary" id="btnConfirmScenarioGen">
-        Generate Response
+        Generate
       </button>
     </div>
   </div>
@@ -1234,10 +1569,12 @@
     <!-- Header -->
     <div class="te-header">
       <div class="te-header-left">
-        <div style="font-size:22px;">🛠</div>
+        <div class="te-header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
         <div>
-          <div class="te-header-name" id="registerToolTitle">Register New Tool</div>
-          <div class="te-header-cat">Add a new tool to the AI Tools Registry</div>
+          <div class="te-header-name" id="registerToolTitle">Register tool</div>
+          <div class="te-header-cat">Add a new tool to the AI tools registry</div>
         </div>
       </div>
       <div class="te-header-right">
@@ -1247,8 +1584,12 @@
 
     <!-- Tabs -->
     <div class="te-tabs">
-      <button class="te-tab active" data-rttab="manual">✏️ Manual Input</button>
-      <button class="te-tab"        data-rttab="fileupload">📂 File Upload</button>
+      <button class="te-tab active" data-rttab="manual">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Manual Input
+      </button>
+      <button class="te-tab" data-rttab="fileupload">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>File Upload
+      </button>
     </div>
 
     <!-- Body -->
@@ -1259,7 +1600,7 @@
         <div class="te-edit-body" style="padding:20px;">
 
           <div class="te-edit-note">
-            ✏️ <strong>Manual entry</strong> — fill in the fields below and click Save Tool.
+            ✏️ <strong>Manual entry</strong> — fill in the fields below and click Save.
           </div>
           <div id="rtEditModeNote" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef9c3;border:1px solid #fde047;color:#713f12;">
             ✏️ You are editing an existing tool. Changes will update the registry.
@@ -1405,7 +1746,7 @@
           <div class="te-section-title" style="margin-top:4px;margin-bottom:12px;">Upload New Document <span class="te-hint">(PDF, DOCX, PPTX, TXT — extracts &amp; pre-fills fields)</span></div>
           <div class="te-file-zone" id="rtFileZone">
             <div class="te-file-zone-icon">📄</div>
-            <div class="te-file-zone-title">Drop files here or <button type="button" id="btnBrowseToolFiles" style="background:none;border:none;color:#2563eb;cursor:pointer;font-weight:700;font-family:inherit;font-size:inherit;padding:0;">browse</button></div>
+            <div class="te-file-zone-title">Drop files here or <button type="button" id="btnBrowseToolFiles" style="background:none;border:none;color:#2563EB;cursor:pointer;font-weight:700;font-family:inherit;font-size:inherit;padding:0;">browse</button></div>
             <div class="te-file-zone-sub">PDF, DOCX, PPTX, TXT — agent will extract info and pre-fill the form fields above</div>
           </div>
           <div id="rtExtractStatus" style="display:none;margin-top:8px;font-size:12px;padding:10px 14px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);"></div>
@@ -1420,7 +1761,7 @@
         <div style="padding:24px 20px;">
 
           <div class="te-edit-note" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;">
-            📂 <strong>Bulk upload</strong> — upload an Excel file (.xlsx) to replace or extend the AI Tools Registry.
+            📂 <strong>Bulk upload</strong> — upload an Excel file (.xlsx) to replace or extend the AI tools registry.
           </div>
 
           <div id="rtBulkDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-top:16px;">
@@ -1456,7 +1797,7 @@
       <div class="te-footer-right" id="rtFooterRight">
         <button class="te-btn te-btn-primary" id="btnSaveRegisterTool">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save Tool
+          Save
         </button>
       </div>
     </div>
@@ -1515,14 +1856,12 @@
   <!-- Header -->
   <div class="an-header">
     <div class="an-header-left">
-      <div class="an-header-icon">📊</div>
+      <button class="modal-back-btn" id="anCloseBtn" aria-label="Back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <div class="an-header-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
       <div>
         <div class="an-header-title">Usage Analytics</div>
         <div class="an-header-sub">Real-time usage insights across all roles &amp; sessions</div>
       </div>
-    </div>
-    <div class="an-header-right">
-      <button class="an-close-btn" id="anCloseBtn" aria-label="Close">✕</button>
     </div>
   </div>
 
@@ -1596,14 +1935,12 @@
 
   <div class="fbv-header">
     <div class="fbv-header-left">
-      <div class="fbv-header-icon">📋</div>
+      <button class="modal-back-btn" id="fbvCloseBtn" aria-label="Back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <div class="fbv-header-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
       <div>
         <div class="fbv-header-title">Feedback Dashboard</div>
         <div class="fbv-header-sub">All user feedback — ratings, comments &amp; issue types</div>
       </div>
-    </div>
-    <div class="fbv-header-right">
-      <button class="fbv-close-btn" id="fbvCloseBtn" aria-label="Close">✕</button>
     </div>
   </div>
 
@@ -1642,7 +1979,7 @@
 
   <div class="tcl-header">
     <div class="tcl-header-left">
-      <div class="tcl-header-icon">🔧</div>
+      <div class="tcl-header-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
       <div>
         <div class="tcl-header-title">Tool Change Log</div>
         <div class="tcl-header-sub">All tool registrations, edits, and deletions</div>
@@ -1698,8 +2035,12 @@
   </div>
 
   <div class="te-tabs">
-    <button class="te-tab active" data-tab="view">📋 View Details</button>
-    <button class="te-tab"        data-tab="edit">✏️ Edit Tool</button>
+    <button class="te-tab active" data-tab="view">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg>View Details
+    </button>
+    <button class="te-tab" data-tab="edit">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edit Tool
+    </button>
   </div>
 
   <div class="te-body">
@@ -1724,7 +2065,7 @@
       <button class="te-btn te-btn-secondary" id="teCancelBtn">Cancel</button>
       <button class="te-btn te-btn-primary"   id="teSaveBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Changes
+        Save changes
       </button>
     </div>
   </div>

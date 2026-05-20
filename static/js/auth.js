@@ -1,16 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    auth.js
-   ─ Shows email login screen before the app loads.
-   ─ POST /api/auth/identify  →  { email, role, permissions }
-   ─ Session stored in sessionStorage (clears on tab close).
-
-   BOTH admin and user see:
-     • Profile icon (hdrMenuWrap) with Sign Out only
-
-   ADMIN only sees (hidden for regular users):
-     • Admin section in hamburger drawer (#drawerAdminSection)
-     • Register Scenario button  (#slRegisterScenarioBtn)
-     • Register Tool button      (#btnRegisterTool)
+   ─ Okta SAML SSO authentication for AI Navigator.
+   ─ On page load: checks ?sso=1 param → fetches /api/auth/me
+     to restore session after Okta redirect.
+   ─ Falls back to sessionStorage for tab-refresh continuity.
+   ─ "Sign in with Okta" button → browser goes to /saml/login.
+   ─ Sign Out → /saml/logout (clears server session + JS state).
 ═══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -20,18 +15,75 @@
 
   /* ── selectors that are ADMIN-ONLY (hidden for regular users) ── */
   const ADMIN_ONLY = [
-    '#drawerAdminSection',    // admin options block in hamburger drawer
-    '#slRegisterScenarioBtn', // Register Scenario button in Scenario Library
-    '#btnRegisterTool',       // Register Tool button in AI Tools
+    '#drawerAdminSection',
+    '#adminRail',
+    '#slRegisterScenarioBtn',
+    '#btnRegisterTool',
+  ];
+
+  /* ── selectors that are USER-ONLY (hidden for admins) ── */
+  const USER_ONLY = [
+    '#slSuggestScenarioBtn',
   ];
 
   /* ── apply role to the UI ─────────────────────────────────── */
   function applyRole(role) {
-    if (role === 'admin') return;
+    if (role === 'admin') {
+      document.body.classList.add('has-admin-rail');
+      const drawerAdmin = document.getElementById('drawerAdminSection');
+      if (drawerAdmin) drawerAdmin.style.display = '';
+      USER_ONLY.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          el.style.setProperty('display', 'none', 'important');
+        });
+      });
+      _wireAdminRail();
+      return;
+    }
+    document.body.classList.remove('has-admin-rail');
+    document.body.classList.remove('admin-rail-collapsed');
+
+    const adminRail = document.getElementById('adminRail');
+    if (adminRail) adminRail.style.setProperty('display', 'none', 'important');
+
+    const main = document.getElementById('mainContent');
+    if (main) main.style.paddingLeft = '0px';
 
     ADMIN_ONLY.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => { el.style.display = 'none'; });
+      document.querySelectorAll(sel).forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+      });
     });
+  }
+
+  function _wireAdminRail() {
+    const map = [
+      ['railAnalytics',  'dropAnalytics'],
+      ['railScenarios',  'dropScenarios'],
+      ['railPolicies',   'dropPolicyUpload'],
+      ['railToolsLog',   'dropToolChangeLog'],
+      ['railFeedback',   'dropFeedbackView'],
+    ];
+    map.forEach(([railId, drawerId]) => {
+      const railBtn   = document.getElementById(railId);
+      const drawerBtn = document.getElementById(drawerId);
+      if (!railBtn || !drawerBtn || railBtn._wired) return;
+      railBtn._wired = true;
+      railBtn.addEventListener('click', () => {
+        document.querySelectorAll('#adminRail .rail-item').forEach(i => i.classList.remove('active'));
+        railBtn.classList.add('active');
+        drawerBtn.click();
+      });
+    });
+  }
+
+  function _initialsFromEmail(email) {
+    const local = (email || '').split('@')[0] || '';
+    if (!local) return '';
+    const parts = local.split(/[^a-zA-Z]+/).filter(Boolean);
+    if (!parts.length) return local.slice(0, 1).toUpperCase();
+    if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   /* ── session helpers ──────────────────────────────────────── */
@@ -44,6 +96,9 @@
   }
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById('homeRecentList')?.replaceChildren();
+    const recentBlock = document.getElementById('homeRecentBlock');
+    if (recentBlock) recentBlock.style.display = 'none';
   }
 
   /* ── show login / show app ────────────────────────────────── */
@@ -56,12 +111,36 @@
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('appShell').style.display   = '';
 
-    const badge = document.getElementById('authUserBadge');
-    if (badge) badge.textContent = session.email;
+    const email = session.email || '';
+    const username = email.includes('@') ? email.split('@')[0] : email;
+    const displayName = username
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(' ');
+    const initials = _initialsFromEmail(email);
+
+    const dropAvatar = document.getElementById('dropUserAvatar');
+    const dropName   = document.getElementById('dropUserName');
+    const dropEmail  = document.getElementById('dropUserEmail');
+    if (dropAvatar) dropAvatar.textContent = initials || '?';
+    if (dropName)   dropName.textContent   = displayName || 'Signed in';
+    if (dropEmail)  dropEmail.textContent  = email;
+
+    const initialsEl = document.querySelector('.hdr-avatar-text');
+    const fallbackEl = document.querySelector('.hdr-avatar-fallback');
+    if (initialsEl) {
+      if (initials) {
+        initialsEl.textContent = initials;
+        if (fallbackEl) fallbackEl.style.display = 'none';
+      } else if (fallbackEl) {
+        initialsEl.textContent = '';
+        fallbackEl.style.display = '';
+      }
+    }
 
     applyRole(session.role);
 
-    /* Profile dropdown toggle — open/close on click */
     const toggleBtn = document.getElementById('hdrToggleBtn');
     const dropdown  = document.getElementById('hdrDropdown');
     if (toggleBtn && dropdown) {
@@ -74,50 +153,7 @@
     }
   }
 
-  const ALLOWED_DOMAIN = '@bs.nttdata.com';
-
-  /* ── login submit ─────────────────────────────────────────── */
-  async function handleLogin(e) {
-    e.preventDefault();
-    const emailInput = document.getElementById('authEmailInput');
-    const errorEl    = document.getElementById('authError');
-    const submitBtn  = document.getElementById('authSubmitBtn');
-    const email      = (emailInput.value || '').trim().toLowerCase();
-
-    if (!email) {
-      errorEl.textContent   = 'Please enter your email address.';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    if (!email.endsWith(ALLOWED_DOMAIN)) {
-      errorEl.textContent   = `Access is restricted to NTT DATA work emails (${ALLOWED_DOMAIN}).`;
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    errorEl.style.display = 'none';
-    submitBtn.disabled    = true;
-    submitBtn.textContent = 'Checking…';
-
-    const fd = new FormData();
-    fd.append('email', email);
-
-    try {
-      const res  = await fetch('/api/auth/identify', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Login failed');
-      saveSession(data);
-      showApp(data);
-    } catch (err) {
-      errorEl.textContent   = `❌ ${err.message}`;
-      errorEl.style.display = 'block';
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Sign In →';
-    }
-  }
-
-  /* ── reset all visible app state so the next user starts fresh ── */
+  /* ── reset app state on sign-out ─────────────────────────── */
   function resetAppState() {
     if (typeof resetToStep1 === 'function') resetToStep1();
 
@@ -135,42 +171,77 @@
 
     if (typeof navigateTo === 'function') navigateTo('home');
 
-    /* Restore admin-only elements so next admin login re-applies correctly */
-    ADMIN_ONLY.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => { el.style.display = ''; });
+    ADMIN_ONLY.concat(USER_ONLY).forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        el.style.removeProperty('display');
+      });
     });
 
-    const badge = document.getElementById('authUserBadge');
-    if (badge) badge.textContent = '';
+    const dropAvatar = document.getElementById('dropUserAvatar');
+    const dropName   = document.getElementById('dropUserName');
+    const dropEmail  = document.getElementById('dropUserEmail');
+    if (dropAvatar) dropAvatar.textContent = '';
+    if (dropName)   dropName.textContent   = '';
+    if (dropEmail)  dropEmail.textContent  = '';
 
-    /* Close profile dropdown if open */
     document.getElementById('hdrDropdown')?.classList.remove('open');
   }
 
-  /* ── logout ───────────────────────────────────────────────── */
+  /* ── logout → server clears session → reload ─────────────── */
   function logout() {
     clearSession();
-    window.location.reload();
+    window.location.href = '/saml/logout';
+  }
+
+  /* ── fetch user from server session (after Okta redirect) ─── */
+  async function fetchServerSession() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
   }
 
   /* ── boot ─────────────────────────────────────────────────── */
-  function boot() {
-    document.getElementById('authForm')?.addEventListener('submit', handleLogin);
-
-    /* Sign out — single binding on the static button */
+  async function boot() {
     document.getElementById('authLogoutBtn')?.addEventListener('click', logout);
 
-    /* Close profile dropdown when clicking anywhere else */
     document.addEventListener('click', () => {
       document.getElementById('hdrDropdown')?.classList.remove('open');
     });
 
-    const session = loadSession();
-    if (session && session.email && session.role) {
-      showApp(session);
-    } else {
-      showLoginScreen();
+    const params = new URLSearchParams(window.location.search);
+    const justLoggedIn = params.get('sso') === '1';
+
+    if (justLoggedIn) {
+      const serverUser = await fetchServerSession();
+      if (serverUser && serverUser.email) {
+        saveSession(serverUser);
+        history.replaceState(null, '', '/');
+        showApp(serverUser);
+        if (typeof initRecentRuns === 'function') initRecentRuns();
+        if (typeof loadHistory === 'function') loadHistory();
+        return;
+      }
     }
+
+    const cached = loadSession();
+    if (cached && cached.email && cached.role) {
+      const serverUser = await fetchServerSession();
+      if (serverUser && serverUser.email) {
+        saveSession(serverUser);
+        showApp(serverUser);
+      } else {
+        showApp(cached);
+      }
+      if (typeof initRecentRuns === 'function') initRecentRuns();
+      if (typeof loadHistory === 'function') loadHistory();
+      return;
+    }
+
+    showLoginScreen();
   }
 
   if (document.readyState === 'loading') {

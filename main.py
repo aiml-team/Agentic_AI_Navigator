@@ -1,14 +1,17 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 from services.database import init_db
 from auth import init_navigator_tables
@@ -24,6 +27,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Enterprise AI Orchestrator v2", lifespan=lifespan)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET_KEY", "change-me-in-production"),
+    session_cookie="navigator_session",
+    max_age=28800,
+    same_site="lax",
+    https_only=False,
+)
 
 app.add_middleware(
     CORSMiddleware,

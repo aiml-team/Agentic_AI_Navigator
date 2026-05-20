@@ -17,3 +17,6 @@ openpyxl
 tavily-python
 pandas
 azure-storage-blob
+redis==5.2.1
+python3-saml==1.16.0
+itsdangerous
