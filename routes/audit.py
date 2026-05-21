@@ -7,6 +7,80 @@ from services.database import get_db
 router = APIRouter()
 
 
+@router.get("/api/analytics/user-activity")
+async def get_user_activity(page: int = 1, per_page: int = 5):
+    """
+    Returns all users (from NavigatorUsers + NavigatorAdmins) joined with
+    their run count from audit_log, sorted by run_count DESC then last_seen DESC.
+    Users with zero runs are included with run_count = 0.
+    Paginated: default 5 per page with total so frontend can do prev/next.
+    """
+    conn = get_db()
+    offset = (page - 1) * per_page
+
+    total_row = conn.execute("""
+        SELECT COUNT(*) AS c FROM (
+            SELECT email FROM NavigatorUsers
+            UNION
+            SELECT email FROM NavigatorAdmins
+        ) AS all_users
+    """).fetchone()
+    total = int(total_row["c"]) if total_row else 0
+
+    rows = conn.execute(f"""
+        SELECT
+            u.email,
+            u.name,
+            u.last_seen,
+            u.first_seen,
+            u.role,
+            ISNULL(r.run_count, 0) AS run_count,
+            r.last_run
+        FROM (
+            SELECT email, name, last_seen, first_seen, 'user' AS role
+            FROM NavigatorUsers
+            UNION ALL
+            SELECT email, name, added_at AS last_seen, added_at AS first_seen, 'admin' AS role
+            FROM NavigatorAdmins
+        ) AS u
+        LEFT JOIN (
+            SELECT LOWER(user_email) AS email,
+                   COUNT(*) AS run_count,
+                   MAX(created_at) AS last_run
+            FROM audit_log
+            WHERE user_email IS NOT NULL AND user_email != ''
+            GROUP BY LOWER(user_email)
+        ) AS r ON LOWER(u.email) = r.email
+        ORDER BY run_count DESC, u.last_seen DESC
+        OFFSET {int(offset)} ROWS FETCH NEXT {int(per_page)} ROWS ONLY
+    """).fetchall()
+
+    conn.close()
+
+    items = []
+    for r in rows:
+        last_seen  = r["last_seen"]
+        first_seen = r["first_seen"]
+        last_run   = r["last_run"]
+        items.append({
+            "email":      r["email"] or "",
+            "name":       r["name"] or "",
+            "role":       r["role"] or "user",
+            "run_count":  int(r["run_count"]),
+            "last_seen":  str(last_seen)[:19].replace("T", " ") if last_seen else "—",
+            "first_seen": str(first_seen)[:19].replace("T", " ") if first_seen else "—",
+            "last_run":   str(last_run)[:19].replace("T", " ") if last_run else "—",
+        })
+
+    return {
+        "total":    total,
+        "page":     page,
+        "per_page": per_page,
+        "pages":    max(1, (total + per_page - 1) // per_page),
+        "items":    items,
+    }
+
+
 @router.get("/api/audit")
 async def get_audit_log(limit: int = 20, user_email: str = ""):
     conn = get_db()

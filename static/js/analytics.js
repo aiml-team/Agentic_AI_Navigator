@@ -12,6 +12,10 @@
   let chartInstances = {};
   let isLoading = false;
 
+  /* ── User Activity pagination state ── */
+  let uaPage    = 1;
+  const UA_PER  = 5;
+
   /* ── DOM refs (resolved after DOMContentLoaded) ── */
   let anOverlay, anModal, anCloseBtn, anDropTrigger;
   let periodTabs, roleSelect, refreshBtn;
@@ -107,6 +111,7 @@
   async function fetchAndRender() {
     if (isLoading) return;
     isLoading = true;
+    uaPage = 1;
 
     showLoading();
     destroyCharts();
@@ -121,6 +126,16 @@
       showError(err.message);
     } finally {
       isLoading = false;
+    }
+  }
+
+  async function fetchUserActivity(page) {
+    try {
+      const res  = await fetch(`/api/analytics/user-activity?page=${page}&per_page=${UA_PER}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch {
+      return null;
     }
   }
 
@@ -187,6 +202,20 @@
         </div>
       </div>
 
+      <!-- User Activity KPI -->
+      <div class="an-card" style="margin-top:18px;">
+        <div class="an-card-header">
+          <span class="an-card-title">👥 User Activity</span>
+          <span class="an-card-badge" id="uaBadge">Loading…</span>
+        </div>
+        <div id="uaTableWrap" style="min-height:80px;"></div>
+        <div class="ua-pagination" id="uaPagination" style="display:none;">
+          <button class="ua-pg-btn" id="uaPrevBtn">← Prev</button>
+          <span class="ua-pg-info" id="uaPageInfo"></span>
+          <button class="ua-pg-btn" id="uaNextBtn">Next →</button>
+        </div>
+      </div>
+
     `;
 
     /* Now populate each section */
@@ -195,6 +224,7 @@
     drawBarList('anIntentBars', byIntent, 'blue');
     drawBarList('anToolBars',   byTool,   'green');
     drawRoleTable(byRole, total);
+    loadUserActivity(1);
   }
 
   /* ── KPI card HTML ── */
@@ -357,6 +387,101 @@
           }).join('')}
         </tbody>
       </table>`;
+  }
+
+  /* ── User Activity table ── */
+  async function loadUserActivity(page) {
+    uaPage = page;
+    const wrap = document.getElementById('uaTableWrap');
+    const badge = document.getElementById('uaBadge');
+    const pagination = document.getElementById('uaPagination');
+    if (!wrap) return;
+
+    wrap.innerHTML = `<div class="an-loading" style="padding:20px 0;"><div class="an-spinner"></div><span>Loading users…</span></div>`;
+
+    const data = await fetchUserActivity(page);
+    if (!data) {
+      wrap.innerHTML = emptyState('Could not load user data');
+      return;
+    }
+
+    if (badge) badge.textContent = `${data.total} user${data.total !== 1 ? 's' : ''}`;
+
+    if (!data.items.length) {
+      wrap.innerHTML = emptyState('No users yet');
+      if (pagination) pagination.style.display = 'none';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table class="ua-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th style="text-align:center;">Runs</th>
+            <th>Last Login</th>
+            <th>Last Run</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.items.map(u => {
+            const initials = _initials(u.email);
+            const displayName = _displayName(u.email);
+            const roleCls = u.role === 'admin' ? 'ua-role-admin' : 'ua-role-user';
+            const runsBadge = u.run_count > 0
+              ? `<span class="ua-runs-badge">${u.run_count}</span>`
+              : `<span class="ua-runs-zero">0</span>`;
+            return `
+              <tr>
+                <td>
+                  <div class="ua-user-cell">
+                    <div class="ua-avatar">${escapeHtml(initials)}</div>
+                    <div class="ua-user-info">
+                      <div class="ua-user-name">${escapeHtml(displayName)}</div>
+                      <div class="ua-user-email">${escapeHtml(u.email)}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="ua-role-pill ${roleCls}">${escapeHtml(u.role)}</span></td>
+                <td style="text-align:center;">${runsBadge}</td>
+                <td class="ua-date">${escapeHtml(u.last_seen)}</td>
+                <td class="ua-date">${escapeHtml(u.last_run)}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+
+    if (pagination) {
+      const prevBtn = document.getElementById('uaPrevBtn');
+      const nextBtn = document.getElementById('uaNextBtn');
+      const pageInfo = document.getElementById('uaPageInfo');
+
+      pagination.style.display = data.pages > 1 ? 'flex' : 'none';
+      if (pageInfo) pageInfo.textContent = `Page ${data.page} of ${data.pages}`;
+      if (prevBtn) {
+        prevBtn.disabled = data.page <= 1;
+        prevBtn.onclick  = () => loadUserActivity(data.page - 1);
+      }
+      if (nextBtn) {
+        nextBtn.disabled = data.page >= data.pages;
+        nextBtn.onclick  = () => loadUserActivity(data.page + 1);
+      }
+    }
+  }
+
+  function _initials(email) {
+    const local = (email || '').split('@')[0] || '';
+    const parts = local.split(/[^a-zA-Z]+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function _displayName(email) {
+    const local = (email || '').split('@')[0] || '';
+    return local.split(/[._-]+/).filter(Boolean)
+      .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
   }
 
   /* ── Loading / Error states ── */
