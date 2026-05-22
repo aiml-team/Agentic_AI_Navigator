@@ -1,6 +1,5 @@
 # Virtual Environment
-UI-ENV/
-DB-ENV/
+MYENV/
 venv/
 env/
 .env/

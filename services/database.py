@@ -109,6 +109,19 @@ def _adapt_sql(sql: str) -> str:
         lambda m: f"FORMAT(TRY_CAST({m.group(2).strip()} AS DATETIME2), '{m.group(1)}')",
         sql, flags=re.IGNORECASE,
     )
+
+    def _convert_limit(m):
+        limit_val = m.group(2).strip()
+        select_part = m.group(1)
+        return re.sub(r'(?i)\bSELECT\b', f'SELECT TOP {limit_val}', select_part, count=1)
+
+    sql = re.sub(
+        r'(SELECT\b.*?)\bLIMIT\s+(\d+)',
+        _convert_limit,
+        sql,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
     return sql
 
 
