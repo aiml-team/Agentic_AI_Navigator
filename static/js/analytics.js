@@ -1,24 +1,28 @@
 /* ══════════════════════════════════════════════════════════════════
-   analytics.js — Unauthorized Analytics Dashboard
+   analytics.js — Analytics Dashboard
    Reads from /api/analytics-dashboard (time + role filtered)
+   Supports: Today / This Week / This Month / Custom Date Range
 ══════════════════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
   /* ── State ── */
-  let currentPeriod = 'day';
-  let currentRole   = 'all';
-  let chartInstances = {};
-  let isLoading = false;
+  let currentPeriod    = 'day';
+  let currentRole      = 'all';
+  let currentStartDate = '';
+  let currentEndDate   = '';
+  let chartInstances   = {};
+  let isLoading        = false;
 
   /* ── User Activity pagination state ── */
-  let uaPage    = 1;
-  const UA_PER  = 5;
+  let uaPage   = 1;
+  const UA_PER = 5;
 
-  /* ── DOM refs (resolved after DOMContentLoaded) ── */
+  /* ── DOM refs ── */
   let anOverlay, anModal, anCloseBtn, anDropTrigger;
   let periodTabs, roleSelect, refreshBtn;
+  let dateRangeBox, startDateInput, endDateInput, applyRangeBtn;
   let bodyEl;
 
   /* ── Color palette ── */
@@ -27,27 +31,29 @@
     '#c62828','#2e7d32','#ad1457','#4527a0','#37474f',
   ];
 
-  const ROLE_COLORS = {
-    'consultant': '#3730a3', 'executive': '#065f46',
-    'developer': '#075985',  'analyst': '#7c2d12',
-    'sales': '#6b21a8',      'marketing': '#991b1b',
-    'hr': '#14532d',         'finance': '#78350f',
-    'general': '#4a5f73',
-  };
-
   /* ════════════════════════════════════════════
      INIT
   ════════════════════════════════════════════ */
   function init() {
-    anOverlay   = document.getElementById('anOverlay');
-    anModal     = document.getElementById('anModal');
-    anCloseBtn  = document.getElementById('anCloseBtn');
-    anDropTrigger = document.getElementById('dropAnalytics');
-    bodyEl      = document.getElementById('anBody');
+    anOverlay      = document.getElementById('anOverlay');
+    anModal        = document.getElementById('anModal');
+    anCloseBtn     = document.getElementById('anCloseBtn');
+    anDropTrigger  = document.getElementById('dropAnalytics');
+    bodyEl         = document.getElementById('anBody');
+    dateRangeBox   = document.getElementById('anDateRangeBox');
+    startDateInput = document.getElementById('anStartDate');
+    endDateInput   = document.getElementById('anEndDate');
+    applyRangeBtn  = document.getElementById('anApplyRange');
 
     if (!anOverlay || !anModal) return;
 
-    /* Open from dropdown */
+    /* Set default end date = today, start date = 7 days ago */
+    const today = new Date();
+    const week  = new Date(today); week.setDate(today.getDate() - 7);
+    if (startDateInput) startDateInput.value = _fmtDate(week);
+    if (endDateInput)   endDateInput.value   = _fmtDate(today);
+
+    /* Open from dropdown / rail */
     anDropTrigger?.addEventListener('click', (e) => {
       e.stopPropagation();
       document.getElementById('menuDrawer')?.classList.remove('open');
@@ -59,7 +65,7 @@
     anCloseBtn?.addEventListener('click', closeDashboard);
     anOverlay?.addEventListener('click', closeDashboard);
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && anModal.classList.contains('open')) closeDashboard();
+      if (e.key === 'Escape' && anModal?.classList.contains('open')) closeDashboard();
     });
 
     /* Period tabs */
@@ -69,8 +75,31 @@
         periodTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentPeriod = tab.dataset.period;
-        fetchAndRender();
+
+        if (currentPeriod === 'custom') {
+          if (dateRangeBox) dateRangeBox.style.display = 'flex';
+        } else {
+          if (dateRangeBox) dateRangeBox.style.display = 'none';
+          currentStartDate = '';
+          currentEndDate   = '';
+          fetchAndRender();
+        }
       });
+    });
+
+    /* Apply custom range button */
+    applyRangeBtn?.addEventListener('click', () => {
+      currentStartDate = startDateInput?.value || '';
+      currentEndDate   = endDateInput?.value   || '';
+      if (!currentStartDate || !currentEndDate) {
+        alert('Please select both a start and end date.');
+        return;
+      }
+      if (currentStartDate > currentEndDate) {
+        alert('Start date must be before end date.');
+        return;
+      }
+      fetchAndRender();
     });
 
     /* Role select */
@@ -117,8 +146,19 @@
     destroyCharts();
 
     try {
-      const url = `/api/analytics-dashboard?period=${currentPeriod}&role=${encodeURIComponent(currentRole)}`;
-      const res  = await fetch(url);
+      const params = new URLSearchParams({ period: currentPeriod, role: currentRole });
+
+      if (currentPeriod === 'custom') {
+        if (!currentStartDate || !currentEndDate) {
+          showError('Please select a start and end date, then click Apply.');
+          isLoading = false;
+          return;
+        }
+        params.set('start_date', currentStartDate);
+        params.set('end_date',   currentEndDate);
+      }
+
+      const res  = await fetch(`/api/analytics-dashboard?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderDashboard(data);
@@ -131,7 +171,7 @@
 
   async function fetchUserActivity(page) {
     try {
-      const res  = await fetch(`/api/analytics/user-activity?page=${page}&per_page=${UA_PER}`);
+      const res = await fetch(`/api/analytics/user-activity?page=${page}&per_page=${UA_PER}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch {
@@ -143,12 +183,12 @@
      RENDER
   ════════════════════════════════════════════ */
   function renderDashboard(d) {
-    const total      = d.total_runs     || 0;
-    const byRole     = d.by_role        || [];
-    const byIntent   = d.by_intent      || [];
-    const byTool     = d.by_tool        || [];
-    const timeline   = d.timeline       || [];
-    const blocked    = d.blocked_runs   || 0;
+    const total    = d.total_runs   || 0;
+    const byRole   = d.by_role      || [];
+    const byIntent = d.by_intent    || [];
+    const byTool   = d.by_tool      || [];
+    const timeline = d.timeline     || [];
+    const blocked  = d.blocked_runs || 0;
 
     bodyEl.innerHTML = `
       <!-- KPI Row -->
@@ -215,10 +255,8 @@
           <button class="ua-pg-btn" id="uaNextBtn">Next →</button>
         </div>
       </div>
-
     `;
 
-    /* Now populate each section */
     drawTimeline(timeline);
     drawRoleDonut(byRole, total);
     drawBarList('anIntentBars', byIntent, 'blue');
@@ -227,7 +265,7 @@
     loadUserActivity(1);
   }
 
-  /* ── KPI card HTML ── */
+  /* ── KPI card ── */
   function kpiCard(icon, label, value, sub, color, pale, extra) {
     return `
       <div class="an-kpi" style="--kpi-color:${color};--kpi-pale:${pale};">
@@ -243,12 +281,12 @@
 
   function trendBadge(pct) {
     if (pct == null) return '';
-    const cls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neu';
+    const cls   = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neu';
     const arrow = pct > 0 ? '↑' : pct < 0 ? '↓' : '→';
     return `<span class="an-kpi-trend ${cls}">${arrow} ${Math.abs(pct)}% vs prev</span>`;
   }
 
-  /* ── Timeline Chart (Chart.js) ── */
+  /* ── Timeline Chart ── */
   function drawTimeline(timeline) {
     const canvas = document.getElementById('anTimelineChart');
     if (!canvas || !timeline.length) {
@@ -256,30 +294,20 @@
       if (wrap) wrap.innerHTML = emptyState('No timeline data yet');
       return;
     }
-
     loadChartJs(() => {
       const labels = timeline.map(t => t.label);
       const values = timeline.map(t => t.count);
-
       chartInstances.timeline = new Chart(canvas, {
         type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            data: values,
-            borderColor: '#1565c0',
-            backgroundColor: 'rgba(21,101,192,0.08)',
-            borderWidth: 2.5,
-            pointBackgroundColor: '#1565c0',
-            pointRadius: values.length > 48 ? 1 : 4,
-            pointHoverRadius: 6,
-            tension: 0.4,
-            fill: true,
-          }],
-        },
+        data: { labels, datasets: [{
+          data: values, borderColor: '#1565c0',
+          backgroundColor: 'rgba(21,101,192,0.08)',
+          borderWidth: 2.5, pointBackgroundColor: '#1565c0',
+          pointRadius: values.length > 48 ? 1 : 4, pointHoverRadius: 6,
+          tension: 0.4, fill: true,
+        }]},
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: {
             callbacks: { label: ctx => ` ${ctx.raw} run${ctx.raw !== 1 ? 's' : ''}` }
           }},
@@ -301,35 +329,24 @@
       if (wrap) wrap.innerHTML = emptyState('No role data');
       return;
     }
-
     const labels = byRole.slice(0,8).map(r => r.role || 'unknown');
     const values = byRole.slice(0,8).map(r => r.count);
     const colors = labels.map((_, i) => COLORS[i % COLORS.length]);
-
-    /* Legend */
     legend.innerHTML = labels.map((l, i) => `
       <div class="an-legend-item">
         <div class="an-legend-dot" style="background:${colors[i]};"></div>
         <span class="an-legend-label">${escapeHtml(l)}</span>
         <span class="an-legend-count">${values[i]}</span>
       </div>`).join('');
-
     loadChartJs(() => {
       chartInstances.donut = new Chart(canvas, {
         type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }],
-        },
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]},
         options: {
-          responsive: false,
-          cutout: '65%',
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: {
-              label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? Math.round(ctx.raw/total*100) : 0}%)`
-            }}
-          },
+          responsive: false, cutout: '65%',
+          plugins: { legend: { display: false }, tooltip: { callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? Math.round(ctx.raw/total*100) : 0}%)`
+          }}},
         },
       });
     });
@@ -340,19 +357,16 @@
     const el = document.getElementById(containerId);
     if (!el) return;
     if (!items.length) { el.innerHTML = emptyState('No data'); return; }
-
     const max = items[0].count || 1;
     el.innerHTML = items.slice(0, 8).map(item => {
-      const pct = Math.round((item.count / max) * 100);
-      const total_pct = item.total_pct ? `${item.total_pct}%` : '';
+      const pct      = Math.round((item.count / max) * 100);
+      const totalPct = item.total_pct ? `${item.total_pct}%` : '';
       return `
         <div class="an-bar-row">
           <div class="an-bar-name" title="${escapeHtml(item.label || '—')}">${escapeHtml(item.label || '—')}</div>
-          <div class="an-bar-track">
-            <div class="an-bar-fill ${colorClass}" style="width:${pct}%"></div>
-          </div>
+          <div class="an-bar-track"><div class="an-bar-fill ${colorClass}" style="width:${pct}%"></div></div>
           <div class="an-bar-count">${item.count}</div>
-          ${total_pct ? `<div class="an-bar-pct">${total_pct}</div>` : ''}
+          ${totalPct ? `<div class="an-bar-pct">${totalPct}</div>` : ''}
         </div>`;
     }).join('');
   }
@@ -362,17 +376,14 @@
     const el = document.getElementById('anRoleTableWrap');
     if (!el) return;
     if (!byRole.length) { el.innerHTML = emptyState('No role data'); return; }
-
     const max = byRole[0]?.count || 1;
     el.innerHTML = `
       <table class="an-role-table">
-        <thead>
-          <tr><th>Role</th><th>Runs</th><th>Share</th></tr>
-        </thead>
+        <thead><tr><th>Role</th><th>Runs</th><th>Share</th></tr></thead>
         <tbody>
           ${byRole.slice(0,8).map((r, i) => {
             const roleLower = (r.role || 'general').toLowerCase().split('/')[0].trim().split(' ')[0];
-            const pct = total ? Math.round(r.count / total * 100) : 0;
+            const pct    = total ? Math.round(r.count / total * 100) : 0;
             const barPct = Math.round(r.count / max * 100);
             return `<tr>
               <td><span class="an-role-pill role-${roleLower}">${escapeHtml(r.role || 'Unknown')}</span></td>
@@ -392,18 +403,15 @@
   /* ── User Activity table ── */
   async function loadUserActivity(page) {
     uaPage = page;
-    const wrap = document.getElementById('uaTableWrap');
-    const badge = document.getElementById('uaBadge');
+    const wrap       = document.getElementById('uaTableWrap');
+    const badge      = document.getElementById('uaBadge');
     const pagination = document.getElementById('uaPagination');
     if (!wrap) return;
 
     wrap.innerHTML = `<div class="an-loading" style="padding:20px 0;"><div class="an-spinner"></div><span>Loading users…</span></div>`;
 
     const data = await fetchUserActivity(page);
-    if (!data) {
-      wrap.innerHTML = emptyState('Could not load user data');
-      return;
-    }
+    if (!data) { wrap.innerHTML = emptyState('Could not load user data'); return; }
 
     if (badge) badge.textContent = `${data.total} user${data.total !== 1 ? 's' : ''}`;
 
@@ -426,10 +434,10 @@
         </thead>
         <tbody>
           ${data.items.map(u => {
-            const initials = _initials(u.email);
+            const initials    = _initials(u.email);
             const displayName = _displayName(u.email);
-            const roleCls = u.role === 'admin' ? 'ua-role-admin' : 'ua-role-user';
-            const runsBadge = u.run_count > 0
+            const roleCls     = u.role === 'admin' ? 'ua-role-admin' : 'ua-role-user';
+            const runsBadge   = u.run_count > 0
               ? `<span class="ua-runs-badge">${u.run_count}</span>`
               : `<span class="ua-runs-zero">0</span>`;
             return `
@@ -453,23 +461,18 @@
       </table>`;
 
     if (pagination) {
-      const prevBtn = document.getElementById('uaPrevBtn');
-      const nextBtn = document.getElementById('uaNextBtn');
+      const prevBtn  = document.getElementById('uaPrevBtn');
+      const nextBtn  = document.getElementById('uaNextBtn');
       const pageInfo = document.getElementById('uaPageInfo');
 
       pagination.style.display = data.pages > 1 ? 'flex' : 'none';
       if (pageInfo) pageInfo.textContent = `Page ${data.page} of ${data.pages}`;
-      if (prevBtn) {
-        prevBtn.disabled = data.page <= 1;
-        prevBtn.onclick  = () => loadUserActivity(data.page - 1);
-      }
-      if (nextBtn) {
-        nextBtn.disabled = data.page >= data.pages;
-        nextBtn.onclick  = () => loadUserActivity(data.page + 1);
-      }
+      if (prevBtn) { prevBtn.disabled = data.page <= 1; prevBtn.onclick = () => loadUserActivity(data.page - 1); }
+      if (nextBtn) { nextBtn.disabled = data.page >= data.pages; nextBtn.onclick = () => loadUserActivity(data.page + 1); }
     }
   }
 
+  /* ── Helpers ── */
   function _initials(email) {
     const local = (email || '').split('@')[0] || '';
     const parts = local.split(/[^a-zA-Z]+/).filter(Boolean);
@@ -482,6 +485,28 @@
     const local = (email || '').split('@')[0] || '';
     return local.split(/[._-]+/).filter(Boolean)
       .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+  }
+
+  function _fmtDate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  function fmtNum(n) {
+    if (n == null) return '—';
+    return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
+  }
+
+  function periodLabel() {
+    if (currentPeriod === 'custom') {
+      return currentStartDate && currentEndDate
+        ? `${currentStartDate} → ${currentEndDate}`
+        : 'Custom Range';
+    }
+    return { day: 'Today', week: 'This Week', month: 'This Month' }[currentPeriod] || 'Today';
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   /* ── Loading / Error states ── */
@@ -499,7 +524,7 @@
         <div class="an-empty-icon">⚠️</div>
         <div style="font-size:16px;font-weight:700;color:#dc2626;margin-bottom:8px;">Could not load analytics</div>
         <div style="font-size:13px;color:#8a9bb0;">${escapeHtml(msg)}</div>
-        <button onclick="window._anRefetch && window._anRefetch()" style="margin-top:16px;padding:8px 20px;background:#1565c0;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Retry</button>
+        <button onclick="window._anRefetch&&window._anRefetch()" style="margin-top:16px;padding:8px 20px;background:#1565c0;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Retry</button>
       </div>`;
     window._anRefetch = fetchAndRender;
   }
@@ -508,31 +533,17 @@
     return `<div class="an-empty"><div class="an-empty-icon">📭</div>${msg}</div>`;
   }
 
-  /* ── Helpers ── */
-  function fmtNum(n) {
-    if (n == null) return '—';
-    return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
-  }
-
-  function periodLabel() {
-    return { day: 'Today', week: 'This Week', month: 'This Month' }[currentPeriod] || 'Today';
-  }
-
-  function escapeHtml(str) {
-    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
   /* ── Lazy-load Chart.js ── */
-  let chartJsLoaded = false;
-  let chartJsCallbacks = [];
+  let chartJsLoaded     = false;
+  let chartJsCallbacks  = [];
 
   function loadChartJs(cb) {
     if (chartJsLoaded) { cb(); return; }
     chartJsCallbacks.push(cb);
     if (document.getElementById('chartjsScript')) return;
     const s = document.createElement('script');
-    s.id  = 'chartjsScript';
-    s.src = '/static/js/chart.umd.min.js';
+    s.id    = 'chartjsScript';
+    s.src   = '/static/js/chart.umd.min.js';
     s.onload = () => {
       chartJsLoaded = true;
       chartJsCallbacks.forEach(fn => fn());

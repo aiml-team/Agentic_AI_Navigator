@@ -189,23 +189,36 @@ def _fill_timeline(rows, since, now, period):
 
 
 @router.get("/api/analytics-dashboard")
-async def get_analytics_dashboard(period: str = "day", role: str = "all"):
+async def get_analytics_dashboard(
+    period: str     = "day",
+    role: str       = "all",
+    start_date: str = "",
+    end_date: str   = "",
+):
     now = datetime.utcnow()
-    if period == "week":
+
+    if period == "custom" and start_date and end_date:
+        try:
+            since     = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt    = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            span      = (end_dt - since).days or 1
+            prev_since = since - timedelta(days=span)
+        except ValueError:
+            raise HTTPException(400, "Invalid date format. Use YYYY-MM-DD.")
+        now = end_dt
+    elif period == "week":
         since      = now - timedelta(weeks=1)
         prev_since = since - timedelta(weeks=1)
-        tl_fmt     = "%Y-%m-%d"
     elif period == "month":
         since      = now - timedelta(days=30)
         prev_since = since - timedelta(days=30)
-        tl_fmt     = "%Y-%m-%d"
     else:
         since      = now - timedelta(days=1)
         prev_since = since - timedelta(days=1)
-        tl_fmt     = "%H"
 
     since_str      = since.isoformat()
     prev_since_str = prev_since.isoformat()
+    end_str        = now.isoformat()
 
     conn = get_db()
 
@@ -215,11 +228,12 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
         role_filter_sql  = " AND LOWER(role) LIKE ?"
         role_filter_args = [f"%{role.lower()}%"]
 
-    base_args      = [since_str]      + role_filter_args
-    prev_base_args = [prev_since_str, since_str] + role_filter_args
+    date_filter_sql  = " AND created_at >= ? AND created_at <= ?"
+    base_args        = [since_str, end_str] + role_filter_args
+    prev_base_args   = [prev_since_str, since_str] + role_filter_args
 
     total = conn.execute(
-        f"SELECT COUNT(*) as c FROM audit_log WHERE created_at >= ?{role_filter_sql}",
+        f"SELECT COUNT(*) as c FROM audit_log WHERE created_at >= ? AND created_at <= ?{role_filter_sql}",
         base_args
     ).fetchone()["c"]
 
@@ -235,7 +249,7 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
     by_role_rows = conn.execute(
         "SELECT TOP 15 role, COUNT(*) as count "
         "FROM audit_log "
-        "WHERE created_at >= ? "
+        "WHERE created_at >= ? AND created_at <= ? "
         "  AND role IS NOT NULL AND LTRIM(RTRIM(role)) != '' "
         + role_filter_sql +
         " GROUP BY role ORDER BY count DESC",
@@ -245,7 +259,7 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
 
     by_intent_rows = conn.execute(
         f"SELECT TOP 10 intent, COUNT(*) as count FROM audit_log "
-        f"WHERE created_at >= ? AND (intent IS NOT NULL AND intent != ''){role_filter_sql} "
+        f"WHERE created_at >= ? AND created_at <= ? AND (intent IS NOT NULL AND intent != ''){role_filter_sql} "
         f"GROUP BY intent ORDER BY count DESC",
         base_args
     ).fetchall()
@@ -258,7 +272,7 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
 
     by_tool_rows = conn.execute(
         f"SELECT TOP 10 recommended_tool, COUNT(*) as count FROM audit_log "
-        f"WHERE created_at >= ? AND (recommended_tool IS NOT NULL AND recommended_tool != ''){role_filter_sql} "
+        f"WHERE created_at >= ? AND created_at <= ? AND (recommended_tool IS NOT NULL AND recommended_tool != ''){role_filter_sql} "
         f"GROUP BY recommended_tool ORDER BY count DESC",
         base_args
     ).fetchall()
@@ -271,7 +285,7 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
 
     blocked = conn.execute(
         f"SELECT COUNT(*) as c FROM audit_log "
-        f"WHERE created_at >= ? AND policy_blocked = 1{role_filter_sql}",
+        f"WHERE created_at >= ? AND created_at <= ? AND policy_blocked = 1{role_filter_sql}",
         base_args
     ).fetchone()["c"]
 
@@ -282,7 +296,7 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
     )
     tl_rows = conn.execute(
         f"SELECT {tl_fmt_sql} as bucket, COUNT(*) as count "
-        f"FROM audit_log WHERE created_at >= ?{role_filter_sql} "
+        f"FROM audit_log WHERE created_at >= ? AND created_at <= ?{role_filter_sql} "
         f"GROUP BY {tl_fmt_sql} ORDER BY bucket ASC",
         base_args
     ).fetchall()
@@ -293,6 +307,8 @@ async def get_analytics_dashboard(period: str = "day", role: str = "all"):
     return {
         "period":       period,
         "role_filter":  role,
+        "start_date":   start_date or since_str[:10],
+        "end_date":     end_date   or end_str[:10],
         "total_runs":   total,
         "change_pct":   change_pct,
         "by_role":      by_role,

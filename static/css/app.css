@@ -88,3 +88,8 @@ body:not(.has-admin-rail) .main {
 .ua-pg-btn:hover:not(:disabled){background:#1565c0;color:#fff;border-color:#1565c0}
 .ua-pg-btn:disabled{opacity:.4;cursor:default}
 .ua-pg-info{font-size:12px;color:#64748b;font-weight:500;min-width:90px;text-align:center}
+/* ── Analytics Custom Date Range ── */
+.an-date-input{padding:5px 10px;border-radius:6px;border:1.5px solid #dde3ea;background:#fff;color:#1a2636;font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
+.an-date-input:focus{border-color:#1565c0}
+.an-apply-btn{padding:5px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;font-family:inherit}
+.an-apply-btn:hover{background:#0d47a1}
