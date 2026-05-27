@@ -16,8 +16,5 @@ __pycache__/
 # Environment variables
 .env
 
-# SAML private key (NEVER commit — public certs only)
-saml/sp.key
-
 # OS junk
 .DS_Store
