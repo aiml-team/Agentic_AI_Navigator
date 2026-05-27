@@ -290,8 +290,21 @@ function getLoggedInEmail() {
      FEEDBACK VIEWER MODAL
   ═══════════════════════════════════════ */
   let viewerOverlay, viewerModal, viewerBody;
-  let vPage = 1, vPerPage = 15, vTotal = 0;
+  let vPage = 1, vPerPage = 5, vTotal = 0;
   let vRating = 0, vSearch = '', vLoading = false;
+  let vPeriod = 'week', vStartDate = '', vEndDate = '';
+
+  function _fbvFmtDate(d) { return d.toISOString().slice(0, 10); }
+
+  function _fbvDateRange() {
+    const now   = new Date();
+    const today = _fbvFmtDate(now);
+    if (vPeriod === 'day')   return { start: today, end: today };
+    if (vPeriod === 'week')  { const d = new Date(now); d.setDate(d.getDate() - 7);  return { start: _fbvFmtDate(d), end: today }; }
+    if (vPeriod === 'month') { const d = new Date(now); d.setDate(d.getDate() - 30); return { start: _fbvFmtDate(d), end: today }; }
+    if (vPeriod === 'custom') return { start: vStartDate, end: vEndDate };
+    return { start: '', end: '' };
+  }
 
   function initViewer() {
     viewerOverlay = document.getElementById('fbvOverlay');
@@ -300,10 +313,39 @@ function getLoggedInEmail() {
 
     if (!viewerModal) return;
 
+    /* Set default custom date range inputs */
+    const today = new Date();
+    const week  = new Date(today); week.setDate(today.getDate() - 7);
+    const sd = document.getElementById('fbvStartDate');
+    const ed = document.getElementById('fbvEndDate');
+    if (sd) sd.value = _fbvFmtDate(week);
+    if (ed) ed.value = _fbvFmtDate(today);
+
     document.getElementById('fbvCloseBtn')?.addEventListener('click', closeViewer);
     viewerOverlay?.addEventListener('click', closeViewer);
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && viewerModal.classList.contains('open')) closeViewer();
+    });
+
+    /* Period tabs */
+    document.querySelectorAll('.fbv-period-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.fbv-period-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        vPeriod = tab.dataset.period;
+        const box = document.getElementById('fbvDateRangeBox');
+        if (box) box.style.display = vPeriod === 'custom' ? 'flex' : 'none';
+        if (vPeriod !== 'custom') { vPage = 1; fetchFeedbacks(); }
+      });
+    });
+
+    /* Apply custom range */
+    document.getElementById('fbvApplyRange')?.addEventListener('click', () => {
+      vStartDate = document.getElementById('fbvStartDate')?.value || '';
+      vEndDate   = document.getElementById('fbvEndDate')?.value   || '';
+      if (!vStartDate || !vEndDate) { alert('Please select both a start and end date.'); return; }
+      if (vStartDate > vEndDate)    { alert('Start date must be before end date.');       return; }
+      vPage = 1; fetchFeedbacks();
     });
 
     document.getElementById('fbvRefreshBtn')?.addEventListener('click', () => {
@@ -329,17 +371,21 @@ function getLoggedInEmail() {
     document.getElementById('sidebarFeedbackView')?.addEventListener('click', openViewer);
   }
 
-  function openViewer() {
-    if (!viewerModal) return;
-    vPage = 1; vRating = 0; vSearch = '';
-    const rf = document.getElementById('fbvRatingFilter');
-    const sr = document.getElementById('fbvSearch');
-    if (rf) rf.value = '0';
-    if (sr) sr.value = '';
-    viewerOverlay.classList.add('open');
-    viewerModal.classList.add('open');
-    fetchFeedbacks();
-  }
+function openViewer() {
+  if (!viewerModal) return;
+  vPage = 1; vRating = 0; vSearch = ''; vPeriod = 'week'; vStartDate = ''; vEndDate = '';
+  document.querySelectorAll('.fbv-period-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.fbv-period-tab[data-period="week"]')?.classList.add('active');
+  const box = document.getElementById('fbvDateRangeBox');
+  if (box) box.style.display = 'none';
+  const rf = document.getElementById('fbvRatingFilter');
+  const sr = document.getElementById('fbvSearch');
+  if (rf) rf.value = '0';
+  if (sr) sr.value = '';
+  viewerOverlay.classList.add('open');
+  viewerModal.classList.add('open');
+  fetchFeedbacks();
+}
 
   function closeViewer() {
     viewerOverlay?.classList.remove('open');
@@ -352,7 +398,11 @@ function getLoggedInEmail() {
     vLoading = true;
     showViewerLoading();
     try {
-      const params = new URLSearchParams({ page: vPage, per_page: vPerPage, rating: vRating, search: vSearch });
+      const range  = _fbvDateRange();
+      const params = new URLSearchParams({
+        page: vPage, per_page: vPerPage, rating: vRating, search: vSearch,
+        start_date: range.start, end_date: range.end,
+      });
       const res  = await fetch(`/api/feedback-list?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -423,16 +473,18 @@ function getLoggedInEmail() {
         }).join('')}
       </div>`;
 
+    const totalPages = data.pages || Math.ceil(total / vPerPage) || 1;
+    const periodLabel = _fbvPeriodLabel();
+
     let tableHtml;
     if (!rows.length) {
-      tableHtml = `<div class="fbv-table-card"><div class="fbv-empty"><div class="fbv-empty-icon">📭</div>No feedbacks found</div></div>`;
+      tableHtml = `<div class="fbv-table-card"><div class="fbv-empty"><div class="fbv-empty-icon">📭</div>No feedbacks found for ${escFbv(periodLabel)}</div></div>`;
     } else {
-      const totalPages = Math.ceil(total / vPerPage);
       tableHtml = `
         <div class="fbv-table-card">
           <div class="fbv-table-header">
-            <span class="fbv-table-title">All Feedbacks</span>
-            <span class="fbv-table-count">Showing ${rows.length} of ${total}</span>
+            <span class="fbv-table-title">Feedbacks — ${escFbv(periodLabel)}</span>
+            <span class="fbv-table-count">Showing ${((vPage - 1) * vPerPage) + 1}–${Math.min(vPage * vPerPage, total)} of ${total}</span>
           </div>
           <div style="overflow-x:auto;">
             <table class="fbv-table">
@@ -465,19 +517,32 @@ function getLoggedInEmail() {
               </tbody>
             </table>
           </div>
-          ${totalPages > 1 ? renderPagination(totalPages) : ''}
+          <div class="fbv-pagination">
+            <button class="fbv-page-btn" id="fbvPrevBtn" ${vPage <= 1 ? 'disabled' : ''}>← Prev</button>
+            <span class="fbv-page-info">Page ${vPage} of ${totalPages}</span>
+            <button class="fbv-page-btn" id="fbvNextBtn" ${vPage >= totalPages ? 'disabled' : ''}>Next →</button>
+          </div>
         </div>`;
     }
 
     viewerBody.innerHTML = kpiHtml + distHtml + tableHtml;
 
-    viewerBody.querySelectorAll('.fbv-page-btn[data-page]').forEach(btn => {
-      btn.addEventListener('click', () => { vPage = +btn.dataset.page; fetchFeedbacks(); });
-    });
+    const prevBtn = viewerBody.querySelector('#fbvPrevBtn');
+    const nextBtn = viewerBody.querySelector('#fbvNextBtn');
+    if (prevBtn) prevBtn.addEventListener('click', () => { vPage--; fetchFeedbacks(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { vPage++; fetchFeedbacks(); });
 
     viewerBody.querySelectorAll('.fbv-view-files-btn').forEach(btn => {
       btn.addEventListener('click', () => openAttachmentViewer(btn.dataset.id));
     });
+  }
+
+  function _fbvPeriodLabel() {
+    if (vPeriod === 'day')    return 'Today';
+    if (vPeriod === 'week')   return 'This Week';
+    if (vPeriod === 'month')  return 'This Month';
+    if (vPeriod === 'custom' && vStartDate && vEndDate) return `${vStartDate} → ${vEndDate}`;
+    return 'All Time';
   }
 
   /* ── Attachment Viewer ── */
@@ -545,20 +610,6 @@ function getLoggedInEmail() {
     const ext = (name.split('.').pop() || '').toLowerCase();
     const map = { pdf: '📄', doc: '📝', docx: '📝', txt: '📃', log: '📃', zip: '🗜️', xlsx: '📊', csv: '📊' };
     return map[ext] || '📎';
-  }
-
-  function renderPagination(totalPages) {
-    const pages = [];
-    for (let p = 1; p <= totalPages; p++) pages.push(p);
-    return `
-      <div class="fbv-pagination">
-        <button class="fbv-page-btn" data-page="${vPage - 1}" ${vPage === 1 ? 'disabled' : ''}>‹ Prev</button>
-        ${pages.slice(Math.max(0, vPage - 3), Math.min(totalPages, vPage + 2)).map(p =>
-          `<button class="fbv-page-btn ${p === vPage ? 'active' : ''}" data-page="${p}">${p}</button>`
-        ).join('')}
-        <button class="fbv-page-btn" data-page="${vPage + 1}" ${vPage === totalPages ? 'disabled' : ''}>Next ›</button>
-        <span class="fbv-page-info">Page ${vPage} of ${totalPages}</span>
-      </div>`;
   }
 
   function renderStars(rating) {

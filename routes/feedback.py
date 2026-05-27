@@ -116,7 +116,14 @@ async def submit_feedback(
 
 
 @router.get("/api/feedback-list")
-async def list_feedback(page: int = 1, per_page: int = 20, rating: int = 0, search: str = ""):
+async def list_feedback(
+    page: int = 1,
+    per_page: int = 5,
+    rating: int = 0,
+    search: str = "",
+    start_date: str = "",
+    end_date: str = "",
+):
     try:
         container = _get_blob_container()
         blobs = list(container.list_blobs(name_starts_with="feedback/"))
@@ -136,13 +143,6 @@ async def list_feedback(page: int = 1, per_page: int = 20, rating: int = 0, sear
 
     all_feedbacks.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
-    ratings_all = [f.get("rating", 0) for f in all_feedbacks if f.get("rating")]
-    avg_rating  = round(sum(ratings_all) / len(ratings_all), 1) if ratings_all else None
-
-    from collections import Counter
-    dist_counter = Counter(f.get("rating") for f in all_feedbacks if f.get("rating"))
-    distribution = [{"rating": r, "count": c} for r, c in sorted(dist_counter.items())]
-
     filtered = all_feedbacks
     if rating > 0:
         filtered = [f for f in filtered if f.get("rating") == rating]
@@ -154,6 +154,17 @@ async def list_feedback(page: int = 1, per_page: int = 20, rating: int = 0, sear
             or q in (f.get("comment") or "").lower()
             or q in (f.get("issue_type") or "").lower()
         ]
+    if start_date.strip():
+        filtered = [f for f in filtered if (f.get("created_at") or "") >= start_date.strip()]
+    if end_date.strip():
+        end_inclusive = end_date.strip() + "T23:59:59"
+        filtered = [f for f in filtered if (f.get("created_at") or "") <= end_inclusive]
+
+    from collections import Counter
+    ratings_filtered = [f.get("rating", 0) for f in filtered if f.get("rating")]
+    avg_rating       = round(sum(ratings_filtered) / len(ratings_filtered), 1) if ratings_filtered else None
+    dist_counter     = Counter(f.get("rating") for f in filtered if f.get("rating"))
+    distribution     = [{"rating": r, "count": c} for r, c in sorted(dist_counter.items())]
 
     total = len(filtered)
     offset = (page - 1) * per_page
@@ -163,6 +174,7 @@ async def list_feedback(page: int = 1, per_page: int = 20, rating: int = 0, sear
         "total":        total,
         "page":         page,
         "per_page":     per_page,
+        "pages":        max(1, (total + per_page - 1) // per_page),
         "avg_rating":   avg_rating,
         "distribution": distribution,
         "feedbacks":    page_items,

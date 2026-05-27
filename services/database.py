@@ -28,7 +28,7 @@ def _get_raw_conn() -> pyodbc.Connection:
 
     conn_str = (
         "DRIVER={ODBC Driver 18 for SQL Server};"
-        f"SERVER={server};"
+        f"SERVER=tcp:{server},1433;"
         f"DATABASE={database};"
         f"UID={username};"
         f"PWD={password};"
@@ -207,6 +207,7 @@ def log_tool_change(tool_name: str, action: str, changed_fields: dict = None, no
 # ── init_db — idempotent table creation in Azure SQL ──────────
 
 def init_db():
+    
     conn = get_db()
 
     ddl_statements = [

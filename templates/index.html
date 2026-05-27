@@ -1877,9 +1877,11 @@
   <div class="an-controls">
     <span class="an-controls-label">Period</span>
     <div class="an-period-tabs">
-      <button class="an-period-tab active" data-period="day">Today</button>
-      <button class="an-period-tab" data-period="week">This Week</button>
+    
+      <button class="an-period-tab active" data-period="week">This Week</button>
+      <button class="an-period-tab" data-period="day">Today</button>
       <button class="an-period-tab" data-period="month">This Month</button>
+      <button class="an-period-tab" data-period="all">All Time</button>
       <button class="an-period-tab" data-period="custom">Custom Range</button>
     </div>
     <div id="anDateRangeBox" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -1893,15 +1895,6 @@
     <span class="an-controls-label">Filter by Role</span>
     <select class="an-role-select" id="anRoleSelect">
       <option value="all">All Roles</option>
-      <option value="general">General</option>
-      <option value="Consultant">Consultant / Manager</option>
-      <option value="Executive">Executive / Director</option>
-      <option value="Developer">Developer / Technical</option>
-      <option value="Analyst">Business Analyst</option>
-      <option value="Sales">Sales / BD</option>
-      <option value="Marketing">Marketing / Comms</option>
-      <option value="HR">HR / People Ops</option>
-      <option value="Finance">Finance / Accounting</option>
     </select>
     <button class="an-refresh-btn" id="anRefreshBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -1918,6 +1911,29 @@
     </div>
   </div>
 
+</div>
+
+<!-- ══════════════════════════════════════
+     ANALYTICS DRILLDOWN POPUP
+══════════════════════════════════════ -->
+<div class="an-drill-overlay" id="anDrillOverlay"></div>
+<div class="an-drill-panel" id="anDrillPanel">
+  <div class="an-drill-header">
+    <div class="an-drill-title-wrap">
+      <span class="an-drill-icon" id="anDrillIcon">📋</span>
+      <div>
+        <div class="an-drill-title" id="anDrillTitle">Logs</div>
+        <div class="an-drill-sub" id="anDrillSub">Showing matching run logs</div>
+      </div>
+    </div>
+    <button class="an-drill-close" id="anDrillClose" aria-label="Close">✕</button>
+  </div>
+  <div class="an-drill-body" id="anDrillBody">
+    <div class="an-loading" style="padding:40px 0;">
+      <div class="an-spinner"></div>
+      <span>Loading logs…</span>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1960,10 +1976,25 @@
     </div>
   </div>
 
-  <div class="fbv-controls">
-    <span class="fbv-controls-label">Search</span>
-    <input class="fbv-search" id="fbvSearch" type="text" placeholder="Search email, comment…" />
-    <span class="fbv-controls-label">Rating</span>
+  <div class="an-controls">
+    <span class="an-controls-label">Period</span>
+    <div class="an-period-tabs">
+      
+      <button class="fbv-period-tab active" data-period="week">This Week</button>
+      <button class="fbv-period-tab" data-period="day">Today</button>
+      <button class="fbv-period-tab" data-period="month">This Month</button>
+      <button class="fbv-period-tab" data-period="all">All Time</button>
+      <button class="fbv-period-tab" data-period="custom">Custom</button>
+    </div>
+    <div id="fbvDateRangeBox" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span class="an-controls-label">From</span>
+      <input type="date" id="fbvStartDate" class="an-date-input" />
+      <span class="an-controls-label">To</span>
+      <input type="date" id="fbvEndDate" class="an-date-input" />
+      <button class="an-apply-btn" id="fbvApplyRange">Apply</button>
+    </div>
+    <div class="an-divider"></div>
+    <span class="an-controls-label">Rating</span>
     <select class="fbv-rating-filter" id="fbvRatingFilter">
       <option value="0">All Ratings</option>
       <option value="5">5 ★ Excellent</option>
@@ -1972,7 +2003,9 @@
       <option value="2">2 ★ Fair</option>
       <option value="1">1 ★ Poor</option>
     </select>
-    <button class="fbv-refresh-btn" id="fbvRefreshBtn">
+    <span class="an-controls-label">Search</span>
+    <input class="fbv-search" id="fbvSearch" type="text" placeholder="Search email, comment…" />
+    <button class="an-refresh-btn" id="fbvRefreshBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       Refresh
     </button>

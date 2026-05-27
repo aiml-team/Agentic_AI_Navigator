@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from services.scenario_similarity_agent import find_similar_scenarios
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from schemas import RegisterScenarioRequest
 from services.scenario_library import SCENARIO_LIBRARY, reload_scenario_library
@@ -92,6 +93,34 @@ async def list_scenario_suggestions(
         "page":     page,
         "per_page": per_page,
         "items":    [dict(r) for r in rows],
+    }
+
+
+@router.get("/api/scenario-suggestions/{suggestion_id}/similarity")
+async def check_scenario_similarity(suggestion_id: str):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM scenario_suggestions WHERE id = ?",
+        (suggestion_id,)
+    ).fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(404, "Suggestion not found")
+
+    submitted = dict(row)
+
+    matches = find_similar_scenarios(
+        submitted=submitted,
+        library=SCENARIO_LIBRARY,
+        limit=5,
+    )
+
+    return {
+        "suggestion_id": suggestion_id,
+        "submitted": submitted,
+        "matches": matches,
+        "highest_score": matches[0]["score"] if matches else 0,
     }
 
 

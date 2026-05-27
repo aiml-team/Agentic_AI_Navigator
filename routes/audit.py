@@ -82,17 +82,43 @@ async def get_user_activity(page: int = 1, per_page: int = 5):
 
 
 @router.get("/api/audit")
-async def get_audit_log(limit: int = 20, user_email: str = ""):
+async def get_audit_log(
+    limit: int = 20,
+    user_email: str = "",
+    intent: str = "",
+    tool: str = "",
+    role: str = "",
+    start_date: str = "",
+    end_date: str = "",
+):
     conn = get_db()
+    conditions = []
+    params = []
+
     if user_email.strip():
-        rows = conn.execute(
-            f"SELECT TOP {int(limit)} * FROM audit_log WHERE LOWER(user_email) = ? ORDER BY created_at DESC",
-            (user_email.strip().lower(),)
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            f"SELECT TOP {int(limit)} * FROM audit_log ORDER BY created_at DESC"
-        ).fetchall()
+        conditions.append("LOWER(user_email) = ?")
+        params.append(user_email.strip().lower())
+    if intent.strip():
+        conditions.append("LOWER(intent) = ?")
+        params.append(intent.strip().lower())
+    if tool.strip():
+        conditions.append("LOWER(recommended_tool) = ?")
+        params.append(tool.strip().lower())
+    if role.strip():
+        conditions.append("LOWER(role) LIKE ?")
+        params.append(f"%{role.strip().lower()}%")
+    if start_date.strip():
+        conditions.append("created_at >= ?")
+        params.append(start_date.strip())
+    if end_date.strip():
+        conditions.append("created_at <= ?")
+        params.append(end_date.strip() + "T23:59:59")
+
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    rows = conn.execute(
+        f"SELECT TOP {int(limit)} * FROM audit_log {where} ORDER BY created_at DESC",
+        params if params else None,
+    ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
@@ -196,29 +222,33 @@ async def get_analytics_dashboard(
     end_date: str   = "",
 ):
     now = datetime.utcnow()
+    all_time = (period == "all")
 
-    if period == "custom" and start_date and end_date:
-        try:
-            since     = datetime.strptime(start_date, "%Y-%m-%d")
-            end_dt    = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
-            span      = (end_dt - since).days or 1
-            prev_since = since - timedelta(days=span)
-        except ValueError:
-            raise HTTPException(400, "Invalid date format. Use YYYY-MM-DD.")
-        now = end_dt
-    elif period == "week":
-        since      = now - timedelta(weeks=1)
-        prev_since = since - timedelta(weeks=1)
-    elif period == "month":
-        since      = now - timedelta(days=30)
-        prev_since = since - timedelta(days=30)
-    else:
-        since      = now - timedelta(days=1)
-        prev_since = since - timedelta(days=1)
+    if not all_time:
+        if period == "custom" and start_date and end_date:
+            try:
+                since      = datetime.strptime(start_date, "%Y-%m-%d")
+                end_dt     = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                span       = (end_dt - since).days or 1
+                prev_since = since - timedelta(days=span)
+            except ValueError:
+                raise HTTPException(400, "Invalid date format. Use YYYY-MM-DD.")
+            now = end_dt
+        elif period == "week":
+            since      = now - timedelta(weeks=1)
+            prev_since = since - timedelta(weeks=1)
+        elif period == "month":
+            since      = now - timedelta(days=30)
+            prev_since = since - timedelta(days=30)
+        else:
+            # Today = calendar day, not rolling last 24 hours
+            since = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            prev_since = since - timedelta(days=1)
+            now = now.replace(hour=23, minute=59, second=59, microsecond=0)
 
-    since_str      = since.isoformat()
-    prev_since_str = prev_since.isoformat()
-    end_str        = now.isoformat()
+        since_str      = since.isoformat()
+        prev_since_str = prev_since.isoformat()
+        end_str        = now.isoformat()
 
     conn = get_db()
 
@@ -228,40 +258,63 @@ async def get_analytics_dashboard(
         role_filter_sql  = " AND LOWER(role) LIKE ?"
         role_filter_args = [f"%{role.lower()}%"]
 
-    date_filter_sql  = " AND created_at >= ? AND created_at <= ?"
-    base_args        = [since_str, end_str] + role_filter_args
-    prev_base_args   = [prev_since_str, since_str] + role_filter_args
+    if all_time:
+        base_args      = role_filter_args
+        prev_base_args = role_filter_args
+        date_where     = ""
+    else:
+        base_args      = [since_str, end_str] + role_filter_args
+        prev_base_args = [prev_since_str, since_str] + role_filter_args
+        date_where     = " AND created_at >= ? AND created_at <= ?"
 
-    total = conn.execute(
-        f"SELECT COUNT(*) as c FROM audit_log WHERE created_at >= ? AND created_at <= ?{role_filter_sql}",
-        base_args
-    ).fetchone()["c"]
+    role_only_where = (" WHERE" + role_filter_sql.replace(" AND ", " ", 1)) if (all_time and role_filter_sql) else ""
 
-    prev_total = conn.execute(
-        f"SELECT COUNT(*) as c FROM audit_log WHERE created_at >= ? AND created_at < ?{role_filter_sql}",
-        prev_base_args
-    ).fetchone()["c"]
+    def _where(extra=""):
+        if all_time:
+            parts = []
+            if role_filter_sql:
+                parts.append(role_filter_sql.lstrip(" AND "))
+            if extra:
+                parts.append(extra.lstrip(" AND "))
+            return (" WHERE " + " AND ".join(parts)) if parts else ""
+        else:
+            base = f" WHERE created_at >= ? AND created_at <= ?{role_filter_sql}"
+            return base + ((" AND " + extra.lstrip(" AND ")) if extra else "")
 
-    change_pct = None
-    if prev_total and prev_total > 0:
-        change_pct = round((total - prev_total) / prev_total * 100)
+    if all_time:
+        total = conn.execute(
+            f"SELECT COUNT(*) as c FROM audit_log{_where()}",
+            base_args or None
+        ).fetchone()["c"]
+        change_pct = None
+    else:
+        total = conn.execute(
+            f"SELECT COUNT(*) as c FROM audit_log WHERE created_at >= ? AND created_at <= ?{role_filter_sql}",
+            base_args
+        ).fetchone()["c"]
+        prev_total = conn.execute(
+            f"SELECT COUNT(*) as c FROM audit_log WHERE created_at >= ? AND created_at < ?{role_filter_sql}",
+            prev_base_args
+        ).fetchone()["c"]
+        change_pct = round((total - prev_total) / prev_total * 100) if prev_total else None
+
+    role_not_empty = "role IS NOT NULL AND LTRIM(RTRIM(role)) != ''"
+    intent_not_empty = "intent IS NOT NULL AND intent != ''"
+    tool_not_empty = "recommended_tool IS NOT NULL AND recommended_tool != ''"
 
     by_role_rows = conn.execute(
-        "SELECT TOP 15 role, COUNT(*) as count "
-        "FROM audit_log "
-        "WHERE created_at >= ? AND created_at <= ? "
-        "  AND role IS NOT NULL AND LTRIM(RTRIM(role)) != '' "
-        + role_filter_sql +
-        " GROUP BY role ORDER BY count DESC",
-        base_args
+        "SELECT TOP 15 role, COUNT(*) as count FROM audit_log"
+        + _where(role_not_empty)
+        + " GROUP BY role ORDER BY count DESC",
+        base_args or None
     ).fetchall()
     by_role = [{"role": r["role"].strip().title() if r["role"].strip().lower() == "general" else r["role"].strip(), "count": r["count"]} for r in by_role_rows]
 
     by_intent_rows = conn.execute(
-        f"SELECT TOP 10 intent, COUNT(*) as count FROM audit_log "
-        f"WHERE created_at >= ? AND created_at <= ? AND (intent IS NOT NULL AND intent != ''){role_filter_sql} "
-        f"GROUP BY intent ORDER BY count DESC",
-        base_args
+        "SELECT TOP 10 intent, COUNT(*) as count FROM audit_log"
+        + _where(intent_not_empty)
+        + " GROUP BY intent ORDER BY count DESC",
+        base_args or None
     ).fetchall()
     total_intent = sum(r["count"] for r in by_intent_rows) or 1
     by_intent = [
@@ -271,10 +324,10 @@ async def get_analytics_dashboard(
     ]
 
     by_tool_rows = conn.execute(
-        f"SELECT TOP 10 recommended_tool, COUNT(*) as count FROM audit_log "
-        f"WHERE created_at >= ? AND created_at <= ? AND (recommended_tool IS NOT NULL AND recommended_tool != ''){role_filter_sql} "
-        f"GROUP BY recommended_tool ORDER BY count DESC",
-        base_args
+        "SELECT TOP 10 recommended_tool, COUNT(*) as count FROM audit_log"
+        + _where(tool_not_empty)
+        + " GROUP BY recommended_tool ORDER BY count DESC",
+        base_args or None
     ).fetchall()
     total_tool = sum(r["count"] for r in by_tool_rows) or 1
     by_tool = [
@@ -284,9 +337,8 @@ async def get_analytics_dashboard(
     ]
 
     blocked = conn.execute(
-        f"SELECT COUNT(*) as c FROM audit_log "
-        f"WHERE created_at >= ? AND created_at <= ? AND policy_blocked = 1{role_filter_sql}",
-        base_args
+        "SELECT COUNT(*) as c FROM audit_log" + _where("policy_blocked = 1"),
+        base_args or None
     ).fetchone()["c"]
 
     tl_fmt_sql = (
@@ -294,21 +346,30 @@ async def get_analytics_dashboard(
         if period == "day"
         else "FORMAT(TRY_CAST(created_at AS DATETIME2), 'yyyy-MM-dd')"
     )
-    tl_rows = conn.execute(
-        f"SELECT {tl_fmt_sql} as bucket, COUNT(*) as count "
-        f"FROM audit_log WHERE created_at >= ? AND created_at <= ?{role_filter_sql} "
-        f"GROUP BY {tl_fmt_sql} ORDER BY bucket ASC",
-        base_args
-    ).fetchall()
-    timeline = _fill_timeline([(r["bucket"], r["count"]) for r in tl_rows], since, now, period)
+    if all_time:
+        tl_rows = conn.execute(
+            f"SELECT {tl_fmt_sql} as bucket, COUNT(*) as count "
+            f"FROM audit_log{_where()} "
+            f"GROUP BY {tl_fmt_sql} ORDER BY bucket ASC",
+            base_args or None
+        ).fetchall()
+        timeline = [{"label": r["bucket"], "count": r["count"]} for r in tl_rows if r["bucket"]]
+    else:
+        tl_rows = conn.execute(
+            f"SELECT {tl_fmt_sql} as bucket, COUNT(*) as count "
+            f"FROM audit_log WHERE created_at >= ? AND created_at <= ?{role_filter_sql} "
+            f"GROUP BY {tl_fmt_sql} ORDER BY bucket ASC",
+            base_args
+        ).fetchall()
+        timeline = _fill_timeline([(r["bucket"], r["count"]) for r in tl_rows], since, now, period)
 
     conn.close()
 
     return {
         "period":       period,
         "role_filter":  role,
-        "start_date":   start_date or since_str[:10],
-        "end_date":     end_date   or end_str[:10],
+        "start_date":   "" if all_time else (start_date or since_str[:10]),
+        "end_date":     "" if all_time else (end_date   or end_str[:10]),
         "total_runs":   total,
         "change_pct":   change_pct,
         "by_role":      by_role,
