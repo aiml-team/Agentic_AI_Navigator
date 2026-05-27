@@ -1682,7 +1682,7 @@ async def saml_metadata():
                .replace("-----END CERTIFICATE-----", "") \
                .replace("\n", "").strip()
 
-    base_url = "https://ai-navigator-ashpbzhbcmgeerbt.northeurope-01.azurewebsites.net/"  # ← local for now
+    base_url = "https://ai-navigator-test-cbeedsgsd8hyfefq.northeurope-01.azurewebsites.net"
 
     xml = f"""<?xml version="1.0"?>
 <md:EntityDescriptor
