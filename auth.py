@@ -63,10 +63,11 @@ def _split_domain(email: str) -> tuple[str, str]:
 def canonicalize_email(email: str) -> str:
     """Return the canonical lowercase form of `email`.
 
-    Strips known subdomain prefixes from the domain so that e.g.
-    `alice@bs.nttdata.com` and `alice@nttdata.com` both map to
-    `alice@nttdata.com`. External (non-NTT) emails are returned
-    unchanged (just lowercased + trimmed).
+    Historical data uses the prefixed form (e.g. `alice@bs.nttdata.com`),
+    so we canonicalize TO that form. Okta sends `alice@nttdata.com` —
+    we rewrite it to `alice@bs.nttdata.com` so display, session, and
+    new audit rows all match the existing DB convention. External
+    (non-NTT) emails are returned unchanged (just lowercased + trimmed).
     """
     if not email:
         return ""
@@ -75,20 +76,29 @@ def canonicalize_email(email: str) -> str:
         return email.strip().lower()
 
     for root, prefixes in _DOMAIN_ALIAS_RULES.items():
+        # Canonical form is the FIRST prefix attached to the root.
+        canonical_prefix = prefixes[0] if prefixes else ""
+        canonical_domain = f"{canonical_prefix}{root}"
+
+        # Already in canonical (prefixed) form.
+        if domain == canonical_domain:
+            return f"{local}@{canonical_domain}"
+        # Bare root → add the prefix.
         if domain == root:
-            return f"{local}@{root}"
+            return f"{local}@{canonical_domain}"
+        # Other known prefix variant → normalize to canonical prefix.
         for prefix in prefixes:
             if domain == f"{prefix}{root}":
-                return f"{local}@{root}"
+                return f"{local}@{canonical_domain}"
 
     return f"{local}@{domain}"
 
 
 def email_aliases(email: str) -> list[str]:
     """Return every lowercase email variant that maps to the same
-    identity as `email` — i.e. the canonical form plus every form
-    with a known subdomain prefix re-attached. Used in SQL
-    `WHERE … IN (?, ?, …)` clauses so historical rows under any
+    identity as `email` — i.e. the canonical (prefixed) form, the
+    bare-root form, and every other known prefix variant. Used in
+    SQL `WHERE … IN (?, ?, …)` clauses so rows stored under any
     alias form are matched.
     """
     canonical = canonicalize_email(email)
@@ -98,7 +108,10 @@ def email_aliases(email: str) -> list[str]:
 
     variants = {canonical}
     for root, prefixes in _DOMAIN_ALIAS_RULES.items():
-        if domain == root:
+        # If the canonical domain is one of our managed (root/prefix)
+        # domains, emit every known variant for this identity.
+        if domain == root or any(domain == f"{p}{root}" for p in prefixes):
+            variants.add(f"{local}@{root}")
             for prefix in prefixes:
                 variants.add(f"{local}@{prefix}{root}")
     return sorted(variants)
