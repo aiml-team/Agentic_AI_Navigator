@@ -8,21 +8,31 @@ from services.cache import (
     get_audit_record, set_audit_record,
     invalidate_audit_record, invalidate_audit_lists_for_user,
 )
+from auth import canonicalize_email, email_aliases
 
 router = APIRouter()
 
 
 @router.get("/api/audit")
 async def get_audit_log(limit: int = 20, user_email: str = ""):
-    cached = get_audit_list(user_email, limit)
+    # Cache key is keyed on the canonical email so that the same
+    # user fetching their history with either `@bs.nttdata.com` or
+    # `@nttdata.com` hits the same cache entry.
+    cache_key_email = canonicalize_email(user_email) if user_email.strip() else ""
+    cached = get_audit_list(cache_key_email, limit)
     if cached is not None:
         return cached
 
     conn = get_db()
     if user_email.strip():
+        # Match every legacy alias form (e.g. @bs.nttdata.com) of the
+        # user's identity — so pre-Okta audit rows still show up.
+        aliases = email_aliases(user_email)
+        placeholders = ",".join("?" * len(aliases))
         rows = conn.execute(
-            "SELECT * FROM audit_log WHERE LOWER(user_email) = ? ORDER BY created_at DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY",
-            (user_email.strip().lower(), limit)
+            f"SELECT * FROM audit_log WHERE LOWER(user_email) IN ({placeholders}) "
+            f"ORDER BY created_at DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY",
+            (*aliases, limit),
         ).fetchall()
     else:
         rows = conn.execute(
@@ -31,7 +41,7 @@ async def get_audit_log(limit: int = 20, user_email: str = ""):
     conn.close()
 
     data = [dict(r) for r in rows]
-    set_audit_list(user_email, limit, data)
+    set_audit_list(cache_key_email, limit, data)
     for record in data:
         if record.get("id"):
             set_audit_record(record["id"], record)

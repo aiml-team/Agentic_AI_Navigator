@@ -11,6 +11,9 @@ router = APIRouter()
 
 @router.post("/api/auth/identify")
 async def identify(email: str = Form(...)):
+    # identify_user() handles canonicalization + alias lookup internally,
+    # so users typing either @bs.nttdata.com or @nttdata.com resolve to
+    # the same identity.
     try:
         result = _auth.identify_user(email)
         result["permissions"] = _auth.get_permissions(result["role"])
