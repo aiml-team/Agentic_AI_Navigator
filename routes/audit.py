@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException
 from schemas import AuditUpdateRequest
 from services.database import get_db
+from auth import canonicalize_email, email_aliases
 
 router = APIRouter()
 
@@ -96,8 +97,13 @@ async def get_audit_log(
     params = []
 
     if user_email.strip():
-        conditions.append("LOWER(user_email) = ?")
-        params.append(user_email.strip().lower())
+        # Match every alias form (e.g. @bs.nttdata.com AND @nttdata.com)
+        # so pre-Okta history is recovered even when Okta sends the
+        # bare @nttdata.com NameID.
+        aliases = email_aliases(user_email)
+        placeholders = ",".join("?" * len(aliases))
+        conditions.append(f"LOWER(user_email) IN ({placeholders})")
+        params.extend(aliases)
     if intent.strip():
         conditions.append("LOWER(intent) = ?")
         params.append(intent.strip().lower())

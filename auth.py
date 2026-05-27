@@ -32,6 +32,78 @@ import pyodbc
 from datetime import datetime, timezone
 
 
+# ═══════════════════════════════════════════════════════════════
+# Email canonicalization (Okta SSO compatibility)
+# ───────────────────────────────────────────────────────────────
+# Before Okta SSO, users were keyed on `<name>@bs.nttdata.com`.
+# Okta now sends NameID as the bare `<name>@nttdata.com` (no `bs.`
+# subdomain), so the same person appears under two different
+# addresses. canonicalize_email() strips the `bs.` subdomain so
+# both forms map to the same canonical identity, and email_aliases()
+# returns every variant — used in SQL `WHERE … IN (?, ?)` to find
+# historical rows under any alias form.
+# ═══════════════════════════════════════════════════════════════
+
+# Subdomain prefixes to collapse, scoped per root-domain so we don't
+# generate nonsense aliases for external emails (e.g. @gmail.com).
+# Format: { "root.domain.com": ("prefix1.", "prefix2.", ...) }
+_DOMAIN_ALIAS_RULES = {
+    "nttdata.com": ("bs.",),
+}
+
+
+def _split_domain(email: str) -> tuple[str, str]:
+    """Return (local_part, domain). Both lowercased. ('', '') if malformed."""
+    if not email or "@" not in email:
+        return ("", "")
+    local, _, domain = email.strip().lower().partition("@")
+    return (local, domain)
+
+
+def canonicalize_email(email: str) -> str:
+    """Return the canonical lowercase form of `email`.
+
+    Strips known subdomain prefixes from the domain so that e.g.
+    `alice@bs.nttdata.com` and `alice@nttdata.com` both map to
+    `alice@nttdata.com`. External (non-NTT) emails are returned
+    unchanged (just lowercased + trimmed).
+    """
+    if not email:
+        return ""
+    local, domain = _split_domain(email)
+    if not domain:
+        return email.strip().lower()
+
+    for root, prefixes in _DOMAIN_ALIAS_RULES.items():
+        if domain == root:
+            return f"{local}@{root}"
+        for prefix in prefixes:
+            if domain == f"{prefix}{root}":
+                return f"{local}@{root}"
+
+    return f"{local}@{domain}"
+
+
+def email_aliases(email: str) -> list[str]:
+    """Return every lowercase email variant that maps to the same
+    identity as `email` — i.e. the canonical form plus every form
+    with a known subdomain prefix re-attached. Used in SQL
+    `WHERE … IN (?, ?, …)` clauses so historical rows under any
+    alias form are matched.
+    """
+    canonical = canonicalize_email(email)
+    local, domain = _split_domain(canonical)
+    if not domain:
+        return [canonical] if canonical else []
+
+    variants = {canonical}
+    for root, prefixes in _DOMAIN_ALIAS_RULES.items():
+        if domain == root:
+            for prefix in prefixes:
+                variants.add(f"{local}@{prefix}{root}")
+    return sorted(variants)
+
+
 # ── connection string built from .env vars ─────────────────────
 def _get_conn() -> pyodbc.Connection:
     server   = os.getenv("AZURE_SQL_SERVER",   "")
@@ -109,48 +181,55 @@ def identify_user(email: str) -> dict:
     Raises:
         Exception — caller should handle and return 500.
     """
-    email = email.strip().lower()
-    if not email:
+    raw_email = (email or "").strip().lower()
+    if not raw_email:
         raise ValueError("Email must not be empty.")
+
+    # Build the alias set so we match historical rows that were
+    # keyed on @bs.nttdata.com before Okta started sending @nttdata.com.
+    aliases   = email_aliases(raw_email)
+    canonical = canonicalize_email(raw_email)
+    placeholders = ",".join("?" * len(aliases))
 
     conn = _get_conn()
     cur  = conn.cursor()
 
     try:
-        # 1. Check admin table
+        # 1. Check admin table — match ANY alias of this identity.
         cur.execute(
-            "SELECT email, name FROM NavigatorAdmins WHERE LOWER(email) = ?",
-            (email,)
+            f"SELECT email, name FROM NavigatorAdmins WHERE LOWER(email) IN ({placeholders})",
+            aliases,
         )
         row = cur.fetchone()
         if row:
-            return {"email": row[0], "role": "admin", "name": row[1] or ""}
+            return {"email": canonical, "role": "admin", "name": row[1] or ""}
 
-        # 2. Check user table
+        # 2. Check user table — match ANY alias.
         cur.execute(
-            "SELECT email, name FROM NavigatorUsers WHERE LOWER(email) = ?",
-            (email,)
+            f"SELECT email, name FROM NavigatorUsers WHERE LOWER(email) IN ({placeholders})",
+            aliases,
         )
         row = cur.fetchone()
         if row:
             cur.execute(
-                "UPDATE NavigatorUsers SET last_seen = ? WHERE LOWER(email) = ?",
-                (datetime.now(timezone.utc), email)
+                f"UPDATE NavigatorUsers SET last_seen = ? WHERE LOWER(email) IN ({placeholders})",
+                [datetime.now(timezone.utc), *aliases],
             )
             conn.commit()
-            return {"email": row[0], "role": "user", "name": row[1] or ""}
+            return {"email": canonical, "role": "user", "name": row[1] or ""}
 
-        # 3. New user — insert into NavigatorUsers
+        # 3. Brand new identity — store under the canonical form so
+        # all future lookups are stable.
         now = datetime.now(timezone.utc)
         cur.execute(
             """
             INSERT INTO NavigatorUsers (email, name, first_seen, last_seen)
             VALUES (?, '', ?, ?)
             """,
-            (email, now, now)
+            (canonical, now, now),
         )
         conn.commit()
-        return {"email": email, "role": "user", "name": ""}
+        return {"email": canonical, "role": "user", "name": ""}
 
     finally:
         conn.close()
@@ -171,31 +250,41 @@ def list_admins() -> list[dict]:
 
 
 def add_admin(email: str, name: str = "") -> dict:
-    """Insert a new admin (or ignore if already exists)."""
-    email = email.strip().lower()
+    """Insert a new admin (or ignore if any alias form already exists).
+    The canonical form is stored so future logins match regardless of
+    which domain alias Okta sends."""
+    canonical = canonicalize_email(email)
+    aliases   = email_aliases(email)
+    placeholders = ",".join("?" * len(aliases))
+
     conn  = _get_conn()
     cur   = conn.cursor()
     cur.execute(
-        """
-        IF NOT EXISTS (SELECT 1 FROM NavigatorAdmins WHERE LOWER(email) = ?)
+        f"""
+        IF NOT EXISTS (SELECT 1 FROM NavigatorAdmins WHERE LOWER(email) IN ({placeholders}))
             INSERT INTO NavigatorAdmins (email, name) VALUES (?, ?)
         """,
-        (email, email, name.strip())
+        [*aliases, canonical, name.strip()],
     )
     conn.commit()
     conn.close()
-    return {"status": "ok", "email": email}
+    return {"status": "ok", "email": canonical}
 
 
 def remove_admin(email: str) -> dict:
-    """Remove an admin by email."""
-    email = email.strip().lower()
+    """Remove an admin — deletes ANY alias form of the given email."""
+    aliases = email_aliases(email)
+    placeholders = ",".join("?" * len(aliases))
+
     conn  = _get_conn()
     cur   = conn.cursor()
-    cur.execute("DELETE FROM NavigatorAdmins WHERE LOWER(email) = ?", (email,))
+    cur.execute(
+        f"DELETE FROM NavigatorAdmins WHERE LOWER(email) IN ({placeholders})",
+        aliases,
+    )
     conn.commit()
     conn.close()
-    return {"status": "ok", "email": email}
+    return {"status": "ok", "email": canonicalize_email(email)}
 
 
 def list_users(page: int = 1, per_page: int = 50) -> dict:

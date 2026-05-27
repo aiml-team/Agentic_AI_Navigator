@@ -7,6 +7,7 @@ from schemas import RunRequest
 from services.orchestrator import orchestrator
 from services.database import get_db
 from services.registry import AI_TOOLS_REGISTRY, SYSTEM_VERSION
+from auth import canonicalize_email
 
 router = APIRouter()
 
@@ -41,7 +42,9 @@ async def run_orchestrator(req: RunRequest):
     policy_summary = result.get("policy_summary", "")
 
     stored_role  = (req.role or "").strip() or "general"
-    stored_email = (req.user_email or "").strip().lower()
+    # Always store the canonical email so every new audit row has a
+    # uniform key — eliminates @bs.nttdata.com vs @nttdata.com drift.
+    stored_email = canonicalize_email(req.user_email or "")
 
     conn = get_db()
     conn.execute(

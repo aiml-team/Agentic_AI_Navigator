@@ -1,8 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    auth.js
-   ─ Shows email login screen before the app loads.
-   ─ POST /api/auth/identify  →  { email, role, permissions }
-   ─ Session stored in sessionStorage (clears on tab close).
+   ─ Okta SAML SSO authentication for AI Navigator.
+   ─ On page load: checks ?sso=1 param → fetches /api/auth/me
+     to restore session after Okta redirect.
+   ─ Falls back to sessionStorage for tab-refresh continuity.
+   ─ "Sign in with Okta" button → browser goes to /saml/login.
+   ─ Sign Out → /saml/logout (clears server session + JS state).
 
    BOTH admin and user see:
      • Profile icon (hdrMenuWrap) with Sign Out only
@@ -185,53 +188,6 @@ ADMIN_ONLY.forEach(sel => {
     }
   }
 
-  const ALLOWED_DOMAIN = '@bs.nttdata.com';
-
-  /* ── login submit ─────────────────────────────────────────── */
-  async function handleLogin(e) {
-    e.preventDefault();
-    const emailInput = document.getElementById('authEmailInput');
-    const errorEl    = document.getElementById('authError');
-    const submitBtn  = document.getElementById('authSubmitBtn');
-    const email      = (emailInput.value || '').trim().toLowerCase();
-
-    if (!email) {
-      errorEl.textContent   = 'Please enter your email address.';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    if (!email.endsWith(ALLOWED_DOMAIN)) {
-      errorEl.textContent   = `Access is restricted to NTT DATA work emails (${ALLOWED_DOMAIN}).`;
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    errorEl.style.display = 'none';
-    submitBtn.disabled    = true;
-    submitBtn.textContent = 'Checking…';
-
-    const fd = new FormData();
-    fd.append('email', email);
-
-    try {
-      const res  = await fetch('/api/auth/identify', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Login failed');
-      saveSession(data);
-      showApp(data);
-
-      if (typeof initRecentRuns === 'function') initRecentRuns();
-      if (typeof loadHistory === 'function') loadHistory();
-
-    } catch (err) {
-      errorEl.textContent   = `❌ ${err.message}`;
-      errorEl.style.display = 'block';
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Sign In →';
-    }
-  }
-
   /* ── reset all visible app state so the next user starts fresh ── */
   function resetAppState() {
     if (typeof resetToStep1 === 'function') resetToStep1();
@@ -270,16 +226,25 @@ ADMIN_ONLY.forEach(sel => {
     document.getElementById('hdrDropdown')?.classList.remove('open');
   }
 
-  /* ── logout ───────────────────────────────────────────────── */
+  /* ── logout → server clears session → reload ─────────────── */
   function logout() {
     clearSession();
-    window.location.reload();
+    window.location.href = '/saml/logout';
+  }
+
+  /* ── fetch user from server session (after Okta redirect) ─── */
+  async function fetchServerSession() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
   }
 
   /* ── boot ─────────────────────────────────────────────────── */
-  function boot() {
-    document.getElementById('authForm')?.addEventListener('submit', handleLogin);
-
+  async function boot() {
     /* Sign out — single binding on the static button */
     document.getElementById('authLogoutBtn')?.addEventListener('click', logout);
 
@@ -288,12 +253,38 @@ ADMIN_ONLY.forEach(sel => {
       document.getElementById('hdrDropdown')?.classList.remove('open');
     });
 
-    const session = loadSession();
-    if (session && session.email && session.role) {
-      showApp(session);
-    } else {
-      showLoginScreen();
+    const params = new URLSearchParams(window.location.search);
+    const justLoggedIn = params.get('sso') === '1';
+
+    /* Fresh login from Okta — fetch session from server, save locally */
+    if (justLoggedIn) {
+      const serverUser = await fetchServerSession();
+      if (serverUser && serverUser.email) {
+        saveSession(serverUser);
+        history.replaceState(null, '', '/');
+        showApp(serverUser);
+        if (typeof initRecentRuns === 'function') initRecentRuns();
+        if (typeof loadHistory === 'function') loadHistory();
+        return;
+      }
     }
+
+    /* Tab-refresh: try server session first (authoritative), fall back to cached */
+    const cached = loadSession();
+    if (cached && cached.email && cached.role) {
+      const serverUser = await fetchServerSession();
+      if (serverUser && serverUser.email) {
+        saveSession(serverUser);
+        showApp(serverUser);
+      } else {
+        showApp(cached);
+      }
+      if (typeof initRecentRuns === 'function') initRecentRuns();
+      if (typeof loadHistory === 'function') loadHistory();
+      return;
+    }
+
+    showLoginScreen();
   }
 
   if (document.readyState === 'loading') {

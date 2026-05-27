@@ -17,3 +17,8 @@ openpyxl
 tavily-python
 pandas
 azure-storage-blob
+# ── Okta SAML SSO ────────────────────────────────────────────
+python3-saml==1.16.0
+itsdangerous==2.2.0
+# ── Optional: Redis caching for audit list / record ──────────
+redis==5.2.1
