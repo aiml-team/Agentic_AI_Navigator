@@ -1,17 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    auth.js
-   ─ Okta SAML SSO temporarily disabled — re-enable next week.
-     The original Okta-driven flow is preserved below inside
-     /* OKTA-DISABLED ... */ /* blocks and can be restored by
-     uncommenting those blocks and the corresponding HTML in
-     templates/index.html + the saml_router registration in
-     routes/__init__.py + the SessionMiddleware in main.py.
-
-   ─ Active flow (email-form login):
-     • Login screen has an email <input> + "Log In" button.
-     • Submit → POST /api/auth/identify → { email, role, permissions }
-     • Session stored in sessionStorage (clears on tab close).
-     • Sign Out → clearSession() + reload().
+   ─ Okta SAML SSO authentication for AI Navigator.
+   ─ On page load: checks ?sso=1 param → fetches /api/auth/me
+     to restore session after Okta redirect.
+   ─ Falls back to sessionStorage for tab-refresh continuity.
+   ─ "Sign in with Okta" button → browser goes to /saml/login.
+   ─ Sign Out → /saml/logout (clears server session + JS state).
 
    BOTH admin and user see:
      • Profile icon (hdrMenuWrap) with Sign Out only
@@ -25,8 +19,7 @@
 (function () {
   'use strict';
 
-  const SESSION_KEY    = 'navigator_session';
-  const ALLOWED_DOMAIN = '@bs.nttdata.com';
+  const SESSION_KEY = 'navigator_session';
 
   /* ── selectors that are ADMIN-ONLY (hidden for regular users) ── */
   const ADMIN_ONLY = [
@@ -233,18 +226,13 @@ ADMIN_ONLY.forEach(sel => {
     document.getElementById('hdrDropdown')?.classList.remove('open');
   }
 
-  /* ── logout → clear session + reload ──────────────────────── */
+  /* ── logout → server clears session → reload ─────────────── */
   function logout() {
     clearSession();
-    /* OKTA-DISABLED: original flow redirected to /saml/logout to clear
-       the server-side SessionMiddleware cookie. With Okta off, there's
-       no server session, so a plain reload is enough.
     window.location.href = '/saml/logout';
-    */
-    window.location.reload();
   }
 
-  /* OKTA-DISABLED — re-enable along with /api/auth/me & SessionMiddleware.
+  /* ── fetch user from server session (after Okta redirect) ─── */
   async function fetchServerSession() {
     try {
       const res = await fetch('/api/auth/me');
@@ -254,58 +242,9 @@ ADMIN_ONLY.forEach(sel => {
       return null;
     }
   }
-  */
-
-  /* ── email-form login handler ─────────────────────────────── */
-  async function handleLogin(e) {
-    e.preventDefault();
-    const emailInput = document.getElementById('authEmailInput');
-    const errorEl    = document.getElementById('authError');
-    const submitBtn  = document.getElementById('authSubmitBtn');
-    const email      = (emailInput.value || '').trim().toLowerCase();
-
-    if (!email) {
-      errorEl.textContent   = 'Please enter your email address.';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    if (!email.endsWith(ALLOWED_DOMAIN)) {
-      errorEl.textContent   = `Access is restricted to NTT DATA work emails (${ALLOWED_DOMAIN}).`;
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    errorEl.style.display = 'none';
-    submitBtn.disabled    = true;
-    submitBtn.textContent = 'Checking…';
-
-    const fd = new FormData();
-    fd.append('email', email);
-
-    try {
-      const res  = await fetch('/api/auth/identify', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Login failed');
-      saveSession(data);
-      showApp(data);
-
-      if (typeof initRecentRuns === 'function') initRecentRuns();
-      if (typeof loadHistory === 'function') loadHistory();
-
-    } catch (err) {
-      errorEl.textContent   = `❌ ${err.message}`;
-      errorEl.style.display = 'block';
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Log In';
-    }
-  }
 
   /* ── boot ─────────────────────────────────────────────────── */
-  function boot() {
-    /* Email-form submit handler (active while Okta is disabled). */
-    document.getElementById('authForm')?.addEventListener('submit', handleLogin);
-
+  async function boot() {
     /* Sign out — single binding on the static button */
     document.getElementById('authLogoutBtn')?.addEventListener('click', logout);
 
@@ -314,10 +253,10 @@ ADMIN_ONLY.forEach(sel => {
       document.getElementById('hdrDropdown')?.classList.remove('open');
     });
 
-    /* OKTA-DISABLED — re-enable when SAML routes are turned back on.
     const params = new URLSearchParams(window.location.search);
     const justLoggedIn = params.get('sso') === '1';
 
+    /* Fresh login from Okta — fetch session from server, save locally */
     if (justLoggedIn) {
       const serverUser = await fetchServerSession();
       if (serverUser && serverUser.email) {
@@ -329,12 +268,17 @@ ADMIN_ONLY.forEach(sel => {
         return;
       }
     }
-    */
 
-    /* sessionStorage-only flow: cached session → show app; else show login. */
-    const session = loadSession();
-    if (session && session.email && session.role) {
-      showApp(session);
+    /* Tab-refresh: try server session first (authoritative), fall back to cached */
+    const cached = loadSession();
+    if (cached && cached.email && cached.role) {
+      const serverUser = await fetchServerSession();
+      if (serverUser && serverUser.email) {
+        saveSession(serverUser);
+        showApp(serverUser);
+      } else {
+        showApp(cached);
+      }
       if (typeof initRecentRuns === 'function') initRecentRuns();
       if (typeof loadHistory === 'function') loadHistory();
       return;
